@@ -1,0 +1,9 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0",
+  "FriendlyName": "HuaShira (path stub)",
+  "Description": "Content-only stub so overridden assets cook to the game's /HuaShira/ mount point",
+  "CanContainContent": true,
+  "Modules": []
+}

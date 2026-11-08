@@ -1,0 +1,38 @@
+# .gitignore — 影之刃零 mod 工作区
+# 原则：生成目录和版权受限的原始模型包不入库；配置、脚本、文档、skill、usmap/AES 入库
+# 注意：git 的 .gitignore 不支持行内注释，注释只能单独成行
+
+# AI 会话记忆与工作区私有数据（本机保留，不入库；不要删除该目录）
+.workbuddy/
+
+# 本机路径配置（从 env.example.ps1 复制修改）
+env.ps1
+
+# 临时文件与日志
+.tmp/
+__pycache__/
+*.pyc
+*.blend1
+
+# UE 工程：只留 Config / Source / uplugin / uproject，其余全是生成物
+ProjectPBZ/Binaries/
+ProjectPBZ/Intermediate/
+ProjectPBZ/Saved/
+ProjectPBZ/DerivedDataCache/
+ProjectPBZ/Build/
+ProjectPBZ/Content/*
+!ProjectPBZ/Content/.keep
+ProjectPBZ/Plugins/HuaShira/Content/*
+!ProjectPBZ/Plugins/HuaShira/Content/.keep
+
+# 编译产物
+tools/PbzExport/bin/
+tools/PbzExport/obj/
+
+# mods 目录：只将 mods/ciel 的配置与文档纳入版本控制，source / input / work / release 及其他 mod 全部排除
+mods/*
+!mods/ciel/
+mods/ciel/source/
+mods/ciel/input/
+mods/ciel/work/
+mods/ciel/release/

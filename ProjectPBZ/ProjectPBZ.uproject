@@ -1,0 +1,21 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "5.7",
+  "Description": "Phantom Blade Zero: Protagonist Replacement Mod Workspace",
+  "Modules": [
+    {
+      "Name": "PbzModEditor",
+      "Type": "Editor",
+      "LoadingPhase": "PostEngineInit"
+    }
+  ],
+  "Plugins": [
+    { "Name": "PythonScriptPlugin", "Enabled": true },
+    { "Name": "EditorScriptingUtilities", "Enabled": true },
+    { "Name": "IKRig", "Enabled": true },
+    { "Name": "MeshModelingToolset", "Enabled": true },
+    { "Name": "ChaosClothAsset", "Enabled": true },
+    { "Name": "ChaosClothAssetEditor", "Enabled": true },
+    { "Name": "HuaShira", "Enabled": true }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "skeleton": "/HuaShira/Characters/Hero/Hero_Hun/Hun_Skin_Skeleton",
+  "skeleton_game_path": "ProjectPBZ/Plugins/HuaShira/Content/Characters/Hero/Hero_Hun/Hun_Skin_Skeleton",
+  "body_game_path": "ProjectPBZ/Plugins/HuaShira/Content/Characters/Hero/Hero_Hun/SkinParts/Hun_Body_Simple",
+  "blank_mesh": "/HuaShira/Characters/Hero/Hero_Hun/Hun_Skin",
+  "physics_asset": "/HuaShira/Characters/Hero/Hero_Hun/PA_Hun",
+  "body": "/HuaShira/Characters/Hero/Hero_Hun/SkinParts/Hun_Body_Simple",
+  "visible_part": "/HuaShira/Characters/Hero/Hero_Hun/SkinParts/Hun_Hair_Band",
+  "blank_parts": [
+    "/HuaShira/Characters/Hero/Hero_Hun/SkinParts/Hun_Head",
+    "/HuaShira/Characters/Hero/Hero_Hun/SkinParts/Hun_Head_New",
+    "/HuaShira/Characters/Hero/Hero_Hun/SkinParts/Hun_Head_New_MoQu",
+    "/HuaShira/Characters/Hero/Hero_Hun/SkinParts/Hun_Hair",
+    "/HuaShira/Characters/Hero/Hero_Hun/SkinParts/Hun_Scarf",
+    "/HuaShira/Characters/Hero/Hero_Hun/SkinParts/Hun_Scarf_Climax",
+    "/HuaShira/Characters/Hero/Hero_Hun/SkinParts/Hun_BrowLashCard",
+    "/HuaShira/Characters/Hero/Hero_Hun/SkinParts/Hun_BrowLashCardMoQu",
+    "/HuaShira/Characters/Hero/Hero_Hun/SkinParts/Hun_Cloth",
+    "/HuaShira/Characters/Hero/Hero_Hun/Hats/Hun_Hat_00",
+    "/HuaShira/Characters/Hero/Hero_Hun/Hats/Hun_Hat_01"
+  ],
+  "blank_cloth": [
+    "/HuaShira/Characters/Hero/Hero_Hun/SkinParts/Cloth/CA_Hun_Cape",
+    "/HuaShira/Characters/Hero/Hero_Hun/SkinParts/Cloth/CA_Hun_Hair01",
+    "/HuaShira/Characters/Hero/Hero_Hun/SkinParts/Cloth/CA_Hun_Hair02",
+    "/HuaShira/Characters/Hero/Hero_Hun/SkinParts/Cloth/CA_Hun_Skirt",
+    "/HuaShira/Characters/Hero/Hero_Hun/SkinParts/Cloth/CA_Hun_UpperCloth"
+  ],
+  "ship_prefixes": [
+    "/HuaShira/Characters/Hero/Hero_Hun/SkinParts/",
+    "/HuaShira/Characters/Hero/Hero_Hun/Hats/"
+  ]
+}
