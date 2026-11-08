@@ -17,6 +17,29 @@ def _base_name(n):
     return n.split('.')[0]
 
 
+def _canonical_humanoid_name(name):
+    s = name.replace('\u3000', ' ')
+    m = re.match(r'^(Shoulder|Upper[_ ]?[Aa]rm|Lower[_ ]?[Aa]rm|Hand|Upper[_ ]?[Ll]eg|Lower[_ ]?[Ll]eg|Foot|Toes?|(?:Thumb|Index|Middle|Ring|Little)[_ ](?:Proximal|Intermediate|Distal))[\._ ]([LR])$', s)
+    if not m:
+        return s
+    body, lr = m.groups()
+    side = 'Left' if lr == 'L' else 'Right'
+    low = body.lower().replace('_', ' ')
+    mapping = {
+        'shoulder': 'Shoulder',
+        'upper arm': 'Upper Arm', 'upperarm': 'Upper Arm',
+        'lower arm': 'Lower Arm', 'lowerarm': 'Lower Arm',
+        'hand': 'Hand',
+        'upper leg': 'Upper Leg', 'upperleg': 'Upper Leg',
+        'lower leg': 'Lower Leg', 'lowerleg': 'Lower Leg',
+        'foot': 'Foot',
+        'toe': 'Toes', 'toes': 'Toes',
+    }
+    if low in mapping:
+        return f'{side} {mapping[low]}'
+    return f'{side} {body.replace("_", " ")}'
+
+
 def run(bpy, arm, cfg, mod_dir, ws_root, log, apply_all):
     m_cfg = cfg['model']
     a_cfg = m_cfg.get('adapt_humanoid') or {}
@@ -46,13 +69,14 @@ def run(bpy, arm, cfg, mod_dir, ws_root, log, apply_all):
 
     meshes = [o for o in bpy.data.objects if o.type == 'MESH']
 
-    # ---------- 1. 规范化全角空格，清理 *_end 末端叶骨 ----------
+    # ---------- 1. 规范化骨骼命名（全角空格、Blender .L/.R 后缀）、合并辅助骨，清理 *_end 末端叶骨 ----------
+    merge_bones = a_cfg.get('merge_bones') or {}
     bpy.context.view_layer.objects.active = arm
     bpy.ops.object.mode_set(mode='EDIT')
     eb = arm.data.edit_bones
     for b in eb:
         b.use_connect = False
-    ren = {b.name: b.name.replace('\u3000', ' ') for b in eb if '\u3000' in b.name}
+    ren = {b.name: _canonical_humanoid_name(b.name) for b in eb if _canonical_humanoid_name(b.name) != b.name}
     for old, new in ren.items():
         eb[old].name = new
     for b in list(eb):
@@ -60,12 +84,30 @@ def run(bpy, arm, cfg, mod_dir, ws_root, log, apply_all):
             if b.parent:
                 b.parent.tail = b.head.copy()
             eb.remove(b)
+    for src_b, dst_b in merge_bones.items():
+        if src_b in eb and dst_b in eb:
+            for c in list(eb):
+                if c.parent == eb[src_b]:
+                    c.parent = eb[dst_b]
+            eb.remove(eb[src_b])
     bpy.ops.object.mode_set(mode='OBJECT')
 
     for m in meshes:
         for g in m.vertex_groups:
-            if '\u3000' in g.name:
-                g.name = g.name.replace('\u3000', ' ')
+            cn = _canonical_humanoid_name(g.name)
+            if cn != g.name:
+                g.name = cn
+        for src_b, dst_b in merge_bones.items():
+            src_g = m.vertex_groups.get(src_b)
+            if not src_g:
+                continue
+            dst_g = m.vertex_groups.get(dst_b) or m.vertex_groups.new(name=dst_b)
+            si = src_g.index
+            for v in m.data.vertices:
+                w = sum(g.weight for g in v.groups if g.group == si)
+                if w > 1e-6:
+                    dst_g.add([v.index], w, 'ADD')
+            m.vertex_groups.remove(src_g)
 
     # ---------- 2. 提前烘焙形态键 ----------
     for m in meshes:
@@ -218,13 +260,25 @@ def run(bpy, arm, cfg, mod_dir, ws_root, log, apply_all):
     r_sp, r_ch, r_nk = eb['Spine'].roll, eb['Chest'].roll, eb['Neck'].roll
 
     p_sh_l = eb['Left Shoulder'].head.copy()
+    p_ua_l = eb['Left Upper Arm'].head.copy()
     v_clav_l = soul_pos_bl('clavicle_l') - soul_pos_bl('spine_05')
+    v_ua_l = soul_pos_bl('upperarm_l') - soul_pos_bl('clavicle_l')
+    if p_sh_l.x > 0.45 * p_ua_l.x:
+        s_ua = (0.68 * p_ua_l.x) / v_ua_l.x
+        p_sh_l = p_ua_l - s_ua * v_ua_l
+        eb['Left Shoulder'].head = p_sh_l
+        eb['Right Shoulder'].head = Vector((-p_sh_l.x, p_sh_l.y, p_sh_l.z))
     s_clav = p_sh_l.x / v_clav_l.x
     p_uch = Vector((0.0, p_sh_l.y - s_clav * v_clav_l.y, p_sh_l.z - s_clav * v_clav_l.z))
 
     s_pelvis = soul_pos_bl('pelvis')
     v_sp_tot = soul_pos_bl('spine_05') - s_pelvis
-    s_spine = (p_uch.z - eb['Hips'].head.z) / v_sp_tot.z
+    hips_z = eb['Hips'].head.z
+    ul_z = eb['Left Upper Leg'].head.z
+    if hips_z - ul_z > 5.0:
+        v_hip_l = soul_pos_bl('thigh_l') - s_pelvis
+        hips_z = ul_z - (eb['Left Upper Leg'].head.x / v_hip_l.x) * v_hip_l.z
+    s_spine = (p_uch.z - hips_z) / v_sp_tot.z
     p_hips = p_uch - s_spine * v_sp_tot
 
     def spine_pt(soul_name):
@@ -254,6 +308,9 @@ def run(bpy, arm, cfg, mod_dir, ws_root, log, apply_all):
     eb['Head'].parent = nk2
     for side in ('Left', 'Right'):
         eb[f'{side} Shoulder'].parent = uch
+    for child_b, parent_b in a_cfg.get('reparent_bones', {}).items():
+        if child_b in eb and parent_b in eb:
+            eb[child_b].parent = eb[parent_b]
 
     for side, s in (('Left', 'l'), ('Right', 'r')):
         ua_b = eb[f'{side} Upper Arm']; la_b = eb[f'{side} Lower Arm']; hd_b = eb[f'{side} Hand']

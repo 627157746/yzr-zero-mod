@@ -44,7 +44,7 @@
 | `attach` | 附件骨骼名 → 挂到主体哪根骨骼下 |
 | `skip_bones` | 合并时丢弃的附件骨骼（例如附件自带的空根骨） |
 | `align_accessories` | `[{ref_fbx, bone, to, apply_to}]`：平移 `apply_to` 里的附件，使 `ref_fbx` 的 `bone` 与主体的 `to` 重合 |
-| `adapt_humanoid` | 启用通用 Humanoid 全身比例逆向适配（`tools/blender/adapt_humanoid.py`）：`{"hand_scale": 1.12, "cuff_margin_cm": 2.0, "reparent_bones": {"Left Sleeve": "Left Lower Arm", ...}}`。自动完成前臂等长适配（末端袖口刚性平移零形变）、静止姿势烘焙、脊柱与 16 根四肢 Twist 骨细分、导出 `soul.adapted_pose_json` 及骨骼名规范化 |
+| `adapt_humanoid` | 启用通用 Humanoid 全身比例逆向适配（`tools/blender/adapt_humanoid.py`）：`{"hand_scale": 1.12, "cuff_margin_cm": 2.0, "merge_bones": {"Elbow_support.L": "Left Upper Arm", ...}, "reparent_bones": {"Left Sleeve": "Left Lower Arm", ...}}`。自动完成 Blender `.L`/`.R` 后缀骨骼名规范化、辅助骨合并（`merge_bones`）、前臂等长适配（末端袖口刚性平移零形变）、静止姿势烘焙、脊柱与 16 根四肢 Twist 骨细分、肩窝/髋部异常轴心自适应修正、子骨骼重挂（`reparent_bones`）、导出 `soul.adapted_pose_json` 及骨骼名规范化 |
 | `blender_hook` | 可选，mod 目录内的 Python 文件，在 `adapt_humanoid` 之后执行，仅用于特殊附件处理 |
 | `delete_meshes` | 删除的网格对象名（备选服装等） |
 | `shape_keys` | 网格名 → {形态键名: 值}。没列出的保持 FBX 里作者设的初始值（**不要清零**，否则 Shrink 类形态键失效会穿模） |
