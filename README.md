@@ -2,11 +2,11 @@
 
 把《影之刃零》（Phantom Blade Zero，UE 5.7）的主角**魂**替换成自定义人形模型（VRChat / Unity / VRoid / Mixamo FBX 等）。本目录是一个多 mod 工作区：通用处理管线（解包、Humanoid 全身比例逆向适配、UE 重定向与次级物理生成、烹饪打包、离线预览）全部独立在 `tools/` 与 `ProjectPBZ/` 中，每个替换模型一个文件夹，仅需配置 `mod.json`。
 
-当前模型目录：
+当前内置示例配置：
 
-| 目录 | 模型 | 状态 |
+| 目录 | 模型 | 说明 |
 |---|---|---|
-| `mods/ciel` | シエル Ciel Ver1.00（ArmoireLepus，VN3 许可） | **已实现**（`default-phys` / `default-basic`，9 段动作 72 帧手部误差 `0.0 cm`） |
+| `mods/ciel` | [シエル -Ciel- Ver1.00](https://booth.pm/zh-cn/items/3368697)（ArmoireLepus，VN3 许可） | **已内置完整 `mod.json` 配置**（`default-phys` / `default-basic`，9 段动作 72 帧手部误差 `0.0 cm`；遵守 VN3 许可，仓库不含原模型 FBX/贴图资产） |
 
 ## 核心架构：通用 Humanoid 全身比例逆向适配管线
 
@@ -29,7 +29,7 @@ yzr-zero-mod/
   README.md                        本文件
   env.ps1                          本机路径配置（tools\common.ps1 读取；从 env.example.ps1 复制）
   soul.json                        魂的资源路径（游戏一侧，所有 mod 共用；游戏更新后核对）
-  deps/                            aes.txt + usmap（跟游戏 build 绑定，不入库）
+  deps/                            aes.txt + usmap（跟游戏 build 26367565 绑定，已入库）
   tools/                           独立公共构建脚本 + PbzExport（C# 解包工具）
     common.ps1                     公共环境、Resolve-Mod、Get-ModConfig、Invoke-UEPython/Invoke-Blender
     pbzcfg.py                      Python 侧读 soul.json + mod.json
@@ -44,15 +44,15 @@ yzr-zero-mod/
       make_hun_blank.py            生成魂的空身体网格
       render_preview.py / render_closeup.py / render_retarget.py / viewlib.py  离线渲染预览
   ProjectPBZ/                      UE 5.7 工程（共用；PbzModEditor C++ 模块在这里）
-  work/soul/                       魂的骨架参考、空身体（共用，extract-game-refs.ps1 生成）
+  work/soul/                       魂的骨架参考、空身体（已入库；游戏更新后用 extract-game-refs.ps1 重生成）
   mods/ciel/
-    mod.json                       Ciel 的全部声明式配置（无模型专属脚本）
-    source/                        原始文件（unitypackage 等，不入库）
-    input/                         解出的 FBX / PNG / Unity 资产（可再生成）
-    docs/安装说明.md                给玩家的安装说明（打包时复制进 release）
-    work/<变体>/                    中间文件、soul_adapted_pose.json、预览图、retarget 对比图（可再生成）
-    release/<变体>-<phys|basic>/    成品：ProjectPBZ\Content\Paks\~mods\ 3 个文件
-  .agents/skills/pbz-protagonist-replace/   通用 skill（含 kit 工具模板和完整文档）
+    mod.json                       Ciel 的全部声明式配置（已入库，无模型专属脚本）
+    docs/安装说明.md                给玩家的安装说明（已入库，打包时自动复制进 release）
+    source/                        放原始模型包（如 ciel_1.0.unitypackage，遵守版权不入库）
+    input/                         build-mod.ps1 自动解出的 FBX / PNG / Unity 资产（生成目录，不入库）
+    work/<变体>/                    Blender/UE 中间文件、soul_adapted_pose.json、预览图（生成目录，不入库）
+    release/<变体>-<phys|basic>/    打包成品：ProjectPBZ\Content\Paks\~mods\ 3 个文件（生成目录，不入库）
+  .agents/skills/pbz-protagonist-replace/   AI Agent 专用 Skill（含完整架构文档、字段说明与引擎避坑指南）
   .tmp/                            日志和临时文件（不入库）
 ```
 
@@ -67,11 +67,21 @@ Copy-Item env.example.ps1 env.ps1
 # 2. 编译 C# 解包工具 PbzExport 与 UE 编辑器 C++ 模块 PbzModEditor
 pwsh tools\build-tools.ps1
 
-# 3. 将 Ciel 原始包（ciel_1.0.unitypackage）放入 mods\ciel\source\
+# 3. 将 Ciel 原始包（ciel_1.0.unitypackage，见 https://booth.pm/zh-cn/items/3368697）放入 mods\ciel\source\
 
 # 4. 一键构建 Ciel（自动解包 -> Blender 全身适配 -> UE 生成与烹饪 -> IoStore 打包 -> 校验）
 pwsh tools\build-mod.ps1 -Mod ciel
 ```
+
+## 如何接入你自己的新模型
+
+1. 创建新模型目录与模板配置：
+   ```powershell
+   pwsh tools\new-mod.ps1 -Name <模型名>
+   ```
+2. 将购买或准备好的 `.unitypackage`（或 FBX + 贴图）放入 `mods\<模型名>\source\`。
+3. 参照 `mods/ciel/mod.json` 配置 `package`、`model.adapt_humanoid`、材质槽映射 `slot_to_hun` 与次级物理分组 `physics.groups`（支持直接使用 Claude Code / Antigravity / Cursor 等 AI 编程助手读取仓库内置的 `.agents/skills/pbz-protagonist-replace/SKILL.md` 自动完成配置与调优）。
+4. 运行 `pwsh tools\build-mod.ps1 -Mod <模型名>` 一键打包并用 `pwsh tools\preview-retarget.ps1 -Mod <模型名>` 离线验证手部误差。
 
 ## 常用命令
 
