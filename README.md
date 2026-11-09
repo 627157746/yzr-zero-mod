@@ -6,7 +6,7 @@
 
 | 目录 | 模型 | 说明 |
 |---|---|---|
-| `mods/ciel` | [シエル -Ciel- Ver1.00](https://booth.pm/zh-cn/items/3368697)（ArmoireLepus，VN3 许可） | **已内置完整 `mod.json` 配置**（`default-phys` / `default-basic`，9 段动作 72 帧手部误差 `0.0 cm`；遵守 VN3 许可，仓库不含原模型 FBX/贴图资产） |
+| `mods/ciel` | [シエル -Ciel- Ver1.00](https://booth.pm/zh-cn/items/3368697)（ArmoireLepus，VN3 许可） | **已内置完整 `mod.json` 配置**（`default-phys` / `default-basic`，9 段动作 72 帧手部误差 `0.0 cm`；遵守 VN3 许可，仓库不含原模型 FBX/贴图资产；📺 **B站实机演示**：https://b23.tv/PfPniyS ） |
 
 ## 核心架构：通用 Humanoid 全身比例逆向适配管线
 
