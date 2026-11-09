@@ -70,7 +70,7 @@ def import_skeletal(fbx, path):
         ui.set_editor_property(k, v)
     sk = ui.get_editor_property('skeletal_mesh_import_data')
     sk.set_editor_property('normal_import_method', u.FBXNormalImportMethod.FBXNIM_IMPORT_NORMALS)
-    sk.set_editor_property('import_morph_targets', False)
+    sk.set_editor_property('import_morph_targets', True)
     sk.set_editor_property('convert_scene', True)
     t = u.AssetImportTask()
     for k, v in (('filename', fbx), ('destination_path', folder), ('destination_name', name), ('automated', True),
@@ -189,6 +189,13 @@ def build_soul():
 
 def build_model(mis):
     mesh = import_skeletal(os.path.join(MODEL_DIR, f'SK_{NAME}.fbx'), f'{FOLDER}/SK_{NAME}')
+    morphs = [str(n) for n in LIB.get_morph_target_names(mesh)]
+    log('模型形态键', morphs)
+    # 眨眼等表情靠形态键驱动：配了 face.blink 就必须真的导进来了
+    blink = (CFG.get('face') or {}).get('blink') or {}
+    if blink:
+        want = blink.get('ue_name') or blink.get('morph')
+        assert want in morphs, f'形态键 {want} 没有导入（fbx 里的形态键: {morphs}）'
     mats = mesh.get_editor_property('materials')
     for i in range(len(mats)):
         s = mats[i]; slot = str(s.get_editor_property('material_slot_name'))
@@ -204,7 +211,7 @@ def build_model(mis):
     foot = m.get_bone_transform(M['left_foot'], True).translation; toe = m.get_bone_transform(M['left_toe'], True).translation
     log('模型 骨骼', len(list(m.get_all_bone_names())), '左脚', (round(foot.x, 1), round(foot.y, 1)), '左脚尖', (round(toe.x, 1), round(toe.y, 1)))
     assert foot.x > 0 and toe.y > foot.y, '模型朝向和魂不一致（UE 里魂朝 +Y、左侧在 +X）'
-    return mesh
+    return mesh, morphs
 
 def ik_rig(path, mesh, root, chains, limbs=None):
     rig = create(path, u.IKRigDefinition, u.IKRigDefinitionFactory())
@@ -363,7 +370,7 @@ def main():
     mis = stub_materials(slots)
     tex = textures(slots)
     soul = build_soul()
-    model = build_model(mis)
+    model, morphs = build_model(mis)
     skel = model.get_editor_property('skeleton')
     ik_src = ik_rig(f'{FOLDER}/IK_Soul', soul, 'Pelvis', {k: SOUL_CHAINS[k] for k in MODEL_CHAINS})
     limbs = {}
@@ -375,6 +382,15 @@ def main():
     rt = retargeter(f'{FOLDER}/RTG_Soul_To_{NAME}', ik_src, ik_tgt, soul, model)
     pa = secondary_physics(f'{FOLDER}/PA_{NAME}_Secondary', model) if PHYS and P.get('groups') else None
     abp = anim_bp(f'{FOLDER}/ABP_{NAME}', skel, model, rt, pa)
+    if (CFG.get('face') or {}).get('blink'):
+        b = CFG['face']['blink']
+        text = LIB.build_blink_event_graph(abp, b['ue_name'] if b.get('ue_name') else b['morph'],
+                                           float(b.get('interval_sec', 4.2)), float(b.get('duration_sec', 0.16)),
+                                           float(b.get('phase_sec', 0.0)), float(b.get('jitter_sec', 1.4)))
+        ok = text.startswith('OK')
+        log('眨眼事件图 编译', ok, '|', text.replace('\n', ' | ')[:600])
+        assert ok, '眨眼事件图生成失败'
+        save(abp)
     band = duplicate(S['visible_part'], model)   # 替换模型显示在魂的这个部件上
     assert LIB.set_post_process_anim_blueprint(band, abp)
     save(band)
@@ -383,7 +399,8 @@ def main():
             EAL.save_directory(d, only_if_is_dirty=False, recursive=True)
     info = {'variant': VARIANT, 'phys': bool(pa), 'slots': slots, 'textures': tex,
             'skeleton': f'{FOLDER}/SK_{NAME}_Skeleton', 'anim_bp': f'{FOLDER}/ABP_{NAME}',
-            'retargeter': f'{FOLDER}/RTG_Soul_To_{NAME}', 'physics': f'{FOLDER}/PA_{NAME}_Secondary' if pa else None}
+            'retargeter': f'{FOLDER}/RTG_Soul_To_{NAME}', 'physics': f'{FOLDER}/PA_{NAME}_Secondary' if pa else None,
+            'blink': (CFG.get('face') or {}).get('blink'), 'morph_targets': morphs}
     json.dump(info, open(os.path.join(MODEL_DIR, 'setup_info.json'), 'w', encoding='utf-8'), indent=1)
     log('变体', VARIANT, '物理', bool(pa))
     log('DONE')

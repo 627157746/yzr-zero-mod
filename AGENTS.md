@@ -27,6 +27,8 @@
 
 **加新模型**：`pwsh tools\new-mod.ps1 -Name <名字>` → 原始文件放 `source/` → 在 `mod.json` 配置 `package`（自动调用 `tools/extract_package.py` 解出 FBX/PNG）与 `model.adapt_humanoid`（自动调用 `tools/blender/adapt_humanoid.py` 完成全身比例适配）→ 先 `-NoPhys` 跑通再开物理。参考 `mods/ciel/mod.json`。
 
+**加表情/眨眼**：在 `mod.json` 的 `model.keep_shape_keys`（源名 → UE 名）与 `face.blink` 里配置 → `build-mod.ps1` 会自动保留形态键并在后处理 ABP 里生成定时眨眼节点链。形态键默认会被烘焙成静止形状，不配 `keep_shape_keys` 就到不了游戏。参数与引擎坑见 references/mod-json.md 的 `face` 节和 facts.md 的「表情 / 眨眼」。
+
 **改了 C#（tools/PbzExport）或 C++（ProjectPBZ/Source）**：`pwsh tools\build-tools.ps1` 重编译后再构建。
 
 **游戏更新了**：核对 build → 换 deps/ 里的 usmap 和 AES → `pwsh tools\extract-game-refs.ps1` 重导魂的参考 → 逐 mod 重打。soul.json 里的路径也要重新核对。
@@ -36,7 +38,8 @@
 1. `build-mod.ps1` 全程通过（每步都有断言，失败会给出 `.tmp\logs\` 下的日志路径，**不静默降级、不假装成功**）。
 2. `verify_release.py` 全部 OK：每个覆盖路径来自 mod 容器、魂的骨架未被覆盖、`Hun_Body_Simple` 仍引用游戏骨架和 `PA_Hun`、`Hun_Hair_Band` 的骨架/动画蓝图/材质正确。
 3. `preview-retarget.ps1`：对比改动前后的手误差（cm）和手臂穿模统计，量化说明效果，不要只说"应该好了"。
-4. 交付时明确区分：离线检查通过 ≠ 进游戏验证过。没进游戏测的要标注"未验证"。
+4. 配了 `face.blink` 的 mod：确认构建日志有 `模型形态键 ['Blink']` 与 `眨眼事件图 编译 True`；形态键几何用 `PbzModEditorLibrary.DescribeMorphTargets` 回读（位移顶点数/最大位移），节点常量与连线用 `DescribeBlinkEventGraph` 回读，再用 Blender 渲染权重 0/0.5/1 的脸部特写肉眼确认。
+5. 交付时明确区分：离线检查通过 ≠ 进游戏验证过。没进游戏测的要标注"未验证"。
 
 ## 排错
 
@@ -44,16 +47,19 @@
 - 引擎行为拿不准，查 `$PbzUERoot\Engine\Source` 源码确认。
 - UE 命令行脚本崩在 Slate/内容浏览器：先确认 `Interchange.FeatureFlags.Import.SyncToBrowser 0` 已执行（setup_assets.py 开头）。
 - Blender 导入 FBX 会去掉形态键名的 `XXX_BS.` 前缀，按后缀匹配；别把形态键清零（作者默认值防穿模）。
+- 带形态键的网格无法 `Apply armature modifier`（`Modifier cannot be applied to a mesh with shape keys`）：要保留的形态键必须先记 delta 再全部删掉，骨架定型后用 `tools/blender/keep_morph.py` 重建。
 - 用户报游戏内问题：要截图和具体动作名，先在离线预览复现并量化，再改参数。
 
 ## 语义约定
 
 - "魂/Soul/Hun" 指游戏原主角；"模型" 指 `mods/<mod>/` 里的替换模型；"变体" 指 mod.json 的 variants；"包" 指变体 × phys/basic 的成品。
-- `adapt_humanoid`、`adapted_pose_json`、`hand_ik`、`arm_pole_deg` 等参数的原理见 references/mod-json.md 和 facts.md，改动前先读。
+- `adapt_humanoid`、`adapted_pose_json`、`hand_ik`、`arm_pole_deg`、`keep_shape_keys`、`face.blink` 等参数的原理见 references/mod-json.md 和 facts.md，改动前先读。
 
 ## 已决策记录（不要翻案）
 
 - 用运行时重定向（`RetargetPoseFromMesh` + 可选 `RigidBody`），不把模型直接绑到魂的 1134 骨原版骨架上，也不需要安装 UE4SS。
+- **眨眼用后处理 ABP 的事件图表 + `UAnimInstance::SetMorphTarget`**，不用 `ModifyCurve` 节点、也不往魂骨架上加曲线：`SetMorphTarget` 写组件的 `MorphTargetCurves`，不依赖骨骼曲线的 MorphTarget 标记和每帧骨骼求值。节点链由 `PbzModEditorLibrary.BuildBlinkEventGraph` 在 C++ 里生成，不需要手进 Persona。
+- **形态键要先全删再重建**（`tools/blender/keep_morph.py`）：带形态键的网格无法 `Apply armature modifier`，所以不可能「保留着形态键跑适配」；delta 必须换到主导骨骼空间存档、定型后再乘新静止矩阵贴回，否则眨眼会沿旧方向合眼。眨眼的 `0.5-0.5*cos` 用 **π 不用 2π**（2π 会在一个窗口里合两次眼，实测最短间隔 0.07 s 像抽搐）。
 - **公共代码全部独立在 `tools/`，标准全流程方案（`tools/extract_package.py` + `tools/blender/adapt_humanoid.py` + `tools/ue/setup_assets.py`）**：
   - **为什么局部缩手臂会出现「大宽肩、猩猩臂、端肩架肘」**：魂的 `Hun_Skin_Skeleton` 中 1067 根骨骼（含 `Pelvis`、`spine_01..05`、`clavicle_l/r`、`upperarm_l/r`、`lowerarm_l/r`、`thigh/calf/foot` 及全部 `twist` 骨）都是 `AnimationScaled` 模式，只有 `hand_l/r`（局部长 `25.40205 cm`）、手指、`weapon_*`、`ik_*` 是 `Animation` 模式。若只缩手臂三节，成年男性的骨盆（109.2 cm）和脊柱（+40.9 cm）会让魂的肩高（150.6 cm）比二次元少女高出 10~17 cm，`TwoBoneIK` 强行把少女手臂往上拽。
   - **通用独立模块 `tools/blender/adapt_humanoid.py` 的四步根治做法**：

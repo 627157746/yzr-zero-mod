@@ -105,6 +105,12 @@ for fname, objs in extras.items():
     log(f'{fname}: 并入 {added} 根骨骼，网格 {[m.name for m in meshes]}')
 
 # 通用 Humanoid 全身比例逆向适配（前臂轴段适配 + 静止姿势烘焙 + 脊柱/四肢 Twist 细分 + 导出 soul.adapted_pose_json）
+# 保留需要的形态键（眨眼等）必须在适配之前记下 delta：适配过程会烘焙掉全部形态键
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import keep_morph
+keep = keep_morph.plan(CFG)
+morph_snap = keep_morph.snapshot(main_arm, [o for o in bpy.data.objects if o.type == 'MESH'], keep, log)
+
 if M.get('adapt_humanoid') is not None:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import adapt_humanoid
@@ -151,8 +157,9 @@ for m in meshes:
         if short in keys.key_blocks: keys.key_blocks[short].value = val
         else: log('缺少形态键', m.name, key)
     log('形态键', base_name(m.name), {kb.name: round(kb.value, 2) for kb in keys.key_blocks[1:] if abs(kb.value) > 1e-6})
-    bpy.context.view_layer.objects.active = m
-    bpy.ops.object.shape_key_remove(all=True, apply_mix=True)
+
+# 形态键全部清空（带形态键的网格无法 Apply armature modifier）：要保留的 delta 已经在 morph_snap 里
+keep_morph.drop_all(bpy, meshes, keep, log)
 
 # 删掉指定材质的面（半透明叠加层等游戏材质画不出来的部分）
 drop = set(M.get('drop_materials', []))
@@ -166,6 +173,9 @@ for m in meshes:
         p.select = p.material_index in idx; n += p.select
     bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.delete(type='FACE'); bpy.ops.object.mode_set(mode='OBJECT')
     log('删除面', m.name, n)
+
+# 要保留的形态键：此刻骨架/蒙皮已全部定型（鞋底落地、静止姿势烘焙、骨骼细分都做完），把 delta 贴回去
+keep_morph.restore(bpy, main_arm, morph_snap, log)
 
 # 材质 → UE 材质槽（槽名必须在 mod.json 的 materials 里）
 slot_of = M['material_slots']
@@ -213,6 +223,8 @@ main_arm.name = main_arm.data.name = 'Armature'
 # 用于 T 姿势下朝外的袖子/裙摆：物理会把它们拉回静止姿势，静止姿势必须是游戏动作里“自然下垂”的方向
 rot = M.get('rest_rotations', [])
 if rot:
+    if morph_snap:
+        fail('rest_rotations 与保留形态键同时存在：静态 delta 不会随静止姿势旋转更新，先在 DCC 里预先转好')
     bpy.context.view_layer.objects.active = main_arm; bpy.ops.object.mode_set(mode='POSE')
     for r in rot:
         b0 = main_arm.data.bones[r['bone']]

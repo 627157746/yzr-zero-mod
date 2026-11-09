@@ -20,6 +20,12 @@
    - **静止姿势烘焙（`Apply Pose as Rest Pose`）**：将模型四肢、手腕、五指对齐魂的静止姿势后直接烘焙为 Rest Pose，随后执行鞋底落地（`Z=0`），配合 `retarget.skip_auto_align: true` 消除自动对齐误差。
    - **脊柱与四肢 16 根 Twist 骨细分 + 躯干向量平行对齐**：在编辑模式下自动细分 `Spine_02/03`、`UpperChest`、`Neck_02` 及 16 根四肢 Twist 骨（`upperarm/lowerarm/thigh/calf_twist_01/02`），按线性投影重分配蒙皮权重；并令 `Hips -> Spine..UpperChest -> Left/Right_Shoulder` 的内部局部平移方向与魂 `orig_t` 完全平行（不移动任何网格顶点）。
    - **全身 `AnimationScaled` 逆向适配（`work/soul_adapted_pose.json`）**：导出全身 42 根骨骼的适配局部平移，由 `tools/ue/setup_assets.py` 写入 `Hun_Body_Simple`（`SK_SoulBlank`），使运行时魂空身体与替换模型的关节位置在所有动作帧下 100% 重合（`ciel` 实测 9 段动作 72 帧手部误差全部为 **`0.0 cm`**）。
+3. **表情形态键保留与定时眨眼（`tools/blender/keep_morph.py` + `face.blink`）**：
+   管线默认会把全部形态键烘焙成静止形状（游戏里再也驱动不了）。在 `model.keep_shape_keys` 里列出要保留的键后：
+   - **适配前记 delta**：把逐顶点位移换到「主导骨骼局部空间」存档（`ciel` 的 `まばたき` 共 1163 个顶点，主导骨骼全是 `Head`），再 `drop_all` 清空全部形态键——带形态键的网格无法 `Apply armature modifier`，必须先删。
+   - **定型后重建**：等鞋底落地、静止姿势烘焙、Twist 细分全部完成后，再乘**新的骨骼静止矩阵**把 delta 贴回去（否则眨眼会沿旧方向合眼），默认值置 0 交给动画曲线驱动。
+   - **运行时驱动**：`PbzModEditorLibrary.BuildBlinkEventGraph` 在后处理 ABP 的事件图表里用 C++ 生成 `Update Animation → 相位/三角窗/余弦 → SetMorphTarget("Blink", w)` 节点链。选 `SetMorphTarget` 是因为它写组件的 `MorphTargetCurves`，不依赖骨骼曲线的 MorphTarget 标记，也不依赖每帧骨骼求值。
+   - **默认节奏**：`interval_sec: 4.2` + `jitter_sec: 1.4`（时间轴正弦抖动）+ `duration_sec: 0.2` → 平均 **4.17 秒**一次、间隔 2.97~6.58 秒、单次闭合约 42 ms。抖动幅度有上限（`≤0.8/频率`），超限会让相位倒退、两次眨眼挤在一起。
 
 ## 目录结构
 
@@ -39,6 +45,7 @@ yzr-zero-mod/
     ue/preview_retarget.py         离线预览的姿势计算与手误差统计
     blender/
       adapt_humanoid.py            通用 Humanoid 全身比例逆向适配、静止姿势烘焙与 Twist 细分模块
+      keep_morph.py                保留指定形态键（眨眼等）：记 delta → 骨架定型后按新静止姿势重建
       prepare_model.py             模型导入、附件合并、材质槽映射与 FBX 导出
       make_textures.py             生成 ARM 与平法线贴图
       make_hun_blank.py            生成魂的空身体网格
@@ -111,3 +118,7 @@ pwsh tools\preview-retarget.ps1 -Mod ciel        # 离线预览：手误差（cm
 ## 修改 mod 行为
 
 所有可调参数都在 `mods/<mod>/mod.json`，字段说明见 `.agents/skills/pbz-protagonist-replace/references/mod-json.md`；游戏版本绑定数据和引擎底层原理见同目录 `facts.md`。
+
+- 调手臂/握武器：`soul.adapted_pose_json`、`model.adapt_humanoid`、`retarget.hand_ik` / `arm_pole_deg` / `finger_alpha`
+- 调物理：`physics.groups` / `world_alpha` / `collide_pairs`
+- 调眨眼：`face.blink` 的 `interval_sec`（间隔）、`jitter_sec`（间隔随机抖动，上限 `0.8/0.31 ≈ 2.58`）、`duration_sec`（单次闭合时长）、`phase_sec`（起始相位）；要保留其他表情键时在 `model.keep_shape_keys` 里加一条即可

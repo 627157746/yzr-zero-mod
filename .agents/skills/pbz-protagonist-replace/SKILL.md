@@ -68,7 +68,7 @@ pwsh tools\build-mod.ps1 -Mod <名字> -Variant <变体> [-NoPhys] [-SkipPrepare
 pwsh tools\preview-retarget.ps1 -Mod <名字>   # 离线预览：手误差（cm）+ 对比图 + 手臂穿模统计
 ```
 
-`build-mod.ps1` 依次执行：`tools/extract_package.py`（若配置了 `package`）→ Blender（`make_textures.py`、`prepare_model.py` + `adapt_humanoid.py`、静止姿势预览图）→ UE（`setup_assets.py`）→ 烹饪 → UnrealPak IoStore 打包 → `verify_release.py` → 复制 `docs/安装说明.md`。每一步都会断言，失败时直接报错并给出日志路径。
+`build-mod.ps1` 依次执行：`tools/extract_package.py`（若配置了 `package`）→ Blender（`make_textures.py`、`prepare_model.py` + `adapt_humanoid.py` + `keep_morph.py`、静止姿势预览图）→ UE（`setup_assets.py`）→ 烹饪 → UnrealPak IoStore 打包 → `verify_release.py` → 复制 `docs/安装说明.md`。每一步都会断言，失败时直接报错并给出日志路径。
 
 UE 工程只有一份：**同一时间只能构建一个 mod**，构建会清掉上一次生成的覆盖资源。`ProjectPBZ/Saved/active_mod.txt` 记录当前生成的是哪个 mod/变体，preview 会核对，不对就报错。各 mod 的 `mod_name` 不能重复。
 
@@ -79,6 +79,7 @@ UE 工程只有一份：**同一时间只能构建一个 mod**，构建会清掉
 3. 填 `retarget.chains`（标准 Humanoid + 16 条 Twist 链已内置在 `new-mod.ps1` 模板中，参考 `examples/ciel/mod.json`）。
 4. 填 `physics.groups`：先跑 `-NoPhys` 确认模型、姿势、材质正确，再配置头发、尾巴、裙摆、飘带物理。
 5. 填 `materials`/`textures`：每个材质槽借一个魂的材质实例，覆盖它的 BC/N/ARM 贴图。
+6. （可选）要眨眼/表情：`model.keep_shape_keys`（源形态键名 → UE 名）+ `face.blink`（`interval_sec` / `jitter_sec` / `duration_sec` / `phase_sec`）；构建日志应出现 `模型形态键 ['Blink']` 与 `眨眼事件图 编译 True`。
 
 ## 问题与修法
 
@@ -91,6 +92,7 @@ UE 工程只有一份：**同一时间只能构建一个 mod**，构建会清掉
 | 转身时头发/尾巴瞬移 | `WorldAlpha` 默认 0 | `physics.world_alpha` 0.5~0.7 |
 | 尾巴/裙子穿腿 | 默认关闭全部碰撞 | `kinematic_colliders` 加腿 + `collide_pairs` |
 | 脚、身体从衣服里穿出 | 形态键未设作者默认值 | 在 `shape_keys` 里填入 prefab/anim 里的默认 Shrink 形态键值 |
+| 要不眨眼（死的表情） | 形态键被烘焙成静止形状，游戏里无法再驱动 | `model.keep_shape_keys` + `face.blink`（见 references/mod-json.md），后处理 ABP 用 `SetMorphTarget` 定时驱动；默认 `interval_sec` 4.2 → 平均 4.17s 一次，不会过频 |
 | 刘海下一块色片 | 半透明叠加阴影层 | `drop_materials` |
 | 角色没换 / 动画全坏 | 文件不全、版本不符 / 打包了魂骨架 | 看 verify 输出；`PbzExport where <路径>` 查资源来自哪个容器 |
 

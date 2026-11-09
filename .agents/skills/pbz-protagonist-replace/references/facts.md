@@ -82,11 +82,23 @@
 - 配件骨架（面具、尾巴、袖子）在 prefab 里挂在身体骨骼下，Blender 合并时按 prefab 的局部变换对位。
 - lilToon 的卡通阴影/描边没法用魂的写实材质还原，交付时说明。
 
+## 表情 / 眨眼（`ciel` 实测，2026-11-09）
+
+- 形态键默认会被烘焙成静止形状（`prepare_model.py` / `adapt_humanoid.py` 都做 `shape_key_remove(all=True, apply_mix=True)`），游戏里就再也驱动不了。要保留的键写 `model.keep_shape_keys`，由 `tools/blender/keep_morph.py` 记录 delta → 骨架定型后重建。
+- **带形态键的网格无法 Apply armature modifier**（`Error: Modifier cannot be applied to a mesh with shape keys`），所以必须在适配前就 `drop_all` 把全部形态键删掉，定型后再重建保留项。
+- delta 必须随主导骨骼一起变：适配会烘焙新的静止姿势（上臂、手、头都转了），把原 delta 直接贴回去会让眨眼沿旧方向合眼。做法是记录时转到「主导骨骼局部空间」，重建时再乘新骨骼矩阵（实测：源 delta 平均方向 `(0,-0.993,0.116)`（朝 -Y），重建后 `(0,-0.116,-0.993)`（跟随头部新静止姿势），位移顶点 1163 个不变）。
+- 驱动方式选 **ABP 事件图表 + `UAnimInstance::SetMorphTarget`**，不选 `ModifyCurve` 节点或骨骼曲线：`SetMorphTarget` 写组件的 `MorphTargetCurves`，在 `UpdateMorphTargetOverrideCurves()` 里被 `AppendActiveMorphTargets` 应用，**不依赖骨骼曲线的 MorphTarget 标记，也不依赖每帧的骨骼求值**（魂不参与的纯曲线 tick 也生效）。节点链完全用 C++ 生成（`BuildBlinkEventGraph`），不需要手进 Persona。
+- 曲线公式：`phase = fmod(t + jitter*sin(0.31t) + offset, interval)`，`s = clamp(1 - |phase - dur/2| / (dur/2), 0, 1)`，`w = 0.5 - 0.5*cos(π*s)`。**必须是 π 不是 2π**：用 2π 会在一个窗口里合两次眼（半个窗口一次），实测间隔最短 0.07s，像抽搐。
+- 时间轴抖动幅度有限制：正弦加在 `t` 上，`频率 × 幅度` 必须明显 < 1，否则相位停滞/倒退。`0.7×1.4=0.98` 就会出现两次眨眼挤在一起；改成 `0.31×1.4=0.43` 后 300 秒 72 次、间隔 2.97~6.58s、标准差 1.24s。
+- 离线验收三件套：① `PbzModEditorLibrary.DescribeMorphTargets` 回读 delta（ciel：`lod0 deltas=1281 moved=1271 max_delta_cm=4.206`）；② `DescribeBlinkEventGraph` 回读节点常量与连线（`SetMorphTarget linked=3 exec=yes {MorphTargetName=Blink}`）；③ Blender 渲染权重 0/0.5/1 三张脸部特写确认闭眼形态正常（读图确认）。
+- 导入网格必须 `sk_import_data.import_morph_targets = True`（原来是 False，形态键根本进不了 UE）。
+
 ## 交付检查清单
 
 - [ ] 成品放在工作区 `release/`，没有写入游戏目录
 - [ ] 每个变体 3 个文件：`.pak`、`.utoc`、`.ucas`
 - [ ] `verify_release.py` 全部 OK（覆盖来源、骨架未被覆盖、动画蓝图、物理资产、材质）
 - [ ] `preview-retarget.ps1`：待机/走/跑手误差接近 0
+- [ ] 如果 mod.json 配了 `face.blink`：`模型形态键 [...]` 里有对应键、`眨眼事件图 编译 True`、离线权重自检与脸部渲染确认
 - [ ] 给玩家的安装说明：变体区别、安装/卸载、3 个文件、已知限制
 - [ ] 说明哪些只在离线预览里验证、没进游戏测过

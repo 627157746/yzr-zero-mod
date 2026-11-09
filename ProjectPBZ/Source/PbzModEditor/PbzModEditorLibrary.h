@@ -46,7 +46,24 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PbzMod")
 	static bool SetPostProcessAnimBlueprint(USkeletalMesh* Mesh, UAnimBlueprint* AnimBlueprint);
 
+	// 后处理动画蓝图的事件图表里生成「定时眨眼」：Update Animation → 相位/三角窗算权重 → SetMorphTarget(名字, 权重)
+	// IntervalSec 两次眨眼中心点的间隔（秒）；DurationSec 单次眨眼的闭+张总时长（秒）；PhaseSec 起始相位偏移（秒）
+	// JitterSec 间隔抖动幅度（秒）：每帧把正弦抖动加在时间上，避免机械的定频眨眼。返回日志，第一行是 OK 或 FAIL
+	UFUNCTION(BlueprintCallable, Category = "PbzMod")
+	static FString BuildBlinkEventGraph(UAnimBlueprint* AnimBlueprint, FName MorphTargetName, float IntervalSec, float DurationSec, float PhaseSec, float JitterSec);
+
 	// ---- 离线预览（不创建资源） ----
+	// 网格上的形态键（morph target）名，用于确认眨眼形态键真的导入进 UE 了
+	UFUNCTION(BlueprintCallable, Category = "PbzMod")
+	static TArray<FName> GetMorphTargetNames(USkeletalMesh* Mesh);
+
+	// 回读眨眼事件图：把 SetMorphTarget 节点的 morph 名、关键常量、连线状态导出成文本（离线验证用）
+	UFUNCTION(BlueprintCallable, Category = "PbzMod")
+	static FString DescribeBlinkEventGraph(UAnimBlueprint* AnimBlueprint);
+
+	// 形态键的逐 LOD 统计（有位移的顶点数、最大位移 cm），用来确认几何真的在网格里而不只是名字
+	UFUNCTION(BlueprintCallable, Category = "PbzMod")
+	static FString DescribeMorphTargets(USkeletalMesh* Mesh);
 	// 网格参考骨架的骨骼名（下面两个函数的输入输出都按这个顺序）
 	UFUNCTION(BlueprintCallable, Category = "PbzMod")
 	static TArray<FName> GetMeshBoneNames(USkeletalMesh* Mesh);

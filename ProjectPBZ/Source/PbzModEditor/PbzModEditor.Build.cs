@@ -7,6 +7,6 @@ public class PbzModEditor : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine" });
-		PrivateDependencyModuleNames.AddRange(new[] { "UnrealEd", "AssetRegistry", "PhysicsCore", "PhysicsUtilities", "IKRig" });
+		PrivateDependencyModuleNames.AddRange(new[] { "UnrealEd", "AssetRegistry", "BlueprintGraph", "PhysicsCore", "PhysicsUtilities", "IKRig" });
 	}
 }

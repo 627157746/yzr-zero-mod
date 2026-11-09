@@ -26,6 +26,7 @@
     "align_accessories": [],
     "delete_meshes": [],
     "shape_keys": {},
+    "keep_shape_keys": {},
     "material_slots": {
       "Face": "Face",
       "Body": "Skin",

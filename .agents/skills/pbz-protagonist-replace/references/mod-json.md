@@ -48,11 +48,22 @@
 | `blender_hook` | 可选，mod 目录内的 Python 文件，在 `adapt_humanoid` 之后执行，仅用于特殊附件处理 |
 | `delete_meshes` | 删除的网格对象名（备选服装等） |
 | `shape_keys` | 网格名 → {形态键名: 值}。没列出的保持 FBX 里作者设的初始值（**不要清零**，否则 Shrink 类形态键失效会穿模） |
+| `keep_shape_keys` | 要保留到游戏里动态驱动的形态键：`{"源形态键名": "UE 里的形态键/曲线名"}`。默认全部形态键会被烘焙成静止形状（游戏里就没法再驱动）；写进这里之后，`tools/blender/keep_morph.py` 在烘焙前记下逐顶点 delta（换到主导骨骼空间），等骨架定型后再按新静止姿势重建，并把默认值归零交给动画曲线驱动。目前用于眨眼（`まばたき` → `Blink`）。不写时会自动从 `face.blink` 推导 |
 | `material_slots` | 模型材质名 → UE 材质槽名。槽名必须在顶层 `materials` 里；没映射的材质会直接报错 |
 | `drop_materials` | 删除用这些材质的面（半透明叠加阴影等游戏材质画不出的层） |
 | `sole_bones` | 鞋底落地用的骨骼（权重 > 0.5 的最低顶点抬到 z=0） |
 | `left_foot` / `left_toe` | 朝向检查用。Blender 里要面朝 -Y、左脚在 +X |
-| `rest_rotations` | `[{bone, dir_to, target}]`：把 `bone`（连同子骨骼和网格）绕自身转到使 `bone→dir_to` 指向 `target`（Blender 坐标），再设为静止姿势 |
+| `rest_rotations` | `[{bone, dir_to, target}]`：把 `bone`（连同子骨骼和网格）绕自身转到使 `bone→dir_to` 指向 `target`（Blender 坐标），再设为静止姿势。与 `keep_shape_keys` 不能同时用（静态 delta 不会随静止姿势旋转更新） |
+
+## face（表情曲线，可选）
+
+| 字段 | 说明 |
+|---|---|
+| `face.blink` | 定时眨眼（后处理 ABP 事件图表驱动，见 `references/facts.md`）：`{"morph": "まばたき", "ue_name": "Blink", "interval_sec": 4.2, "jitter_sec": 1.4, "duration_sec": 0.2, "phase_sec": 0.0}` |
+| `interval_sec` | 两次眨眼中心点的间隔（秒）。`4.2` 时实测平均 4.17s，范围 3.0~6.6s |
+| `jitter_sec` | 间隔抖动幅度（秒），加在时间轴上：`t + jitter*sin(0.31t)`。**不要超过 `0.8/0.31 ≈ 2.58`**，否则相位会停滞/倒退，两次眨眼挤在一起像抽搐（超限时 C++ 侧自动限幅并在日志里写明） |
+| `duration_sec` | 单次眨眼从半闭到半闭的总时长（秒）。`0.2` 时完全闭合约 42ms，接近真人 |
+| `phase_sec` | 起始相位偏移（秒），用来避开开场第一帧就眨眼 |
 
 ## retarget
 

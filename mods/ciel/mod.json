@@ -72,6 +72,19 @@
         "Left Sleeve": "Left Lower Arm",
         "Right Sleeve": "Right Lower Arm"
       }
+    },
+    "keep_shape_keys": {
+      "まばたき": "Blink"
+    }
+  },
+  "face": {
+    "blink": {
+      "morph": "まばたき",
+      "ue_name": "Blink",
+      "interval_sec": 4.2,
+      "jitter_sec": 1.4,
+      "duration_sec": 0.2,
+      "phase_sec": 0.0
     }
   },
   "retarget": {
