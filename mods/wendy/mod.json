@@ -1,0 +1,559 @@
+{
+  "mod_name": "Wendy",
+  "container": "zzz_Wendy_P",
+  "soul": {
+    "adapted_pose_json": "work/soul_adapted_pose.json",
+    "arm_scale": {
+      "clavicle": 1.0,
+      "upperarm": 1.0,
+      "lowerarm": 1.0
+    }
+  },
+  "package": {
+    "unitypackage": "source/Wendy v1.01.unitypackage",
+    "prefix": "Assets/Kaerimichi/Wendy/",
+    "tex_dirs": [
+      "/texture/"
+    ],
+    "unity_dirs": [
+      "/prefab/",
+      "/animator/animation/fx/"
+    ]
+  },
+  "model": {
+    "fbx_dir": "input/fbx",
+    "main_fbx": "Wendy.fbx",
+    "extra_fbx": [],
+    "optional_fbx": {},
+    "blender_to_cm": 100.0,
+    "scale": 1.37,
+    "root_bone": "Hips",
+    "attach": {},
+    "skip_bones": [],
+    "align_accessories": [],
+    "delete_meshes": [
+      "Clothes_arm_cover_short"
+    ],
+    "blender_hook": "hooks/curl_tail.py",
+    "shape_keys": {
+      "Body_base": {
+        "Breasts_closer": 1.0,
+        "Toe_highheels": 1.0
+      },
+      "Clothes_chest": {
+        "Breasts_closer": 1.0
+      },
+      "Clothes_skirt": {
+        "Breasts_closer": 1.0
+      },
+      "Hair_back": {
+        "Back_long": 1.0
+      },
+      "Hair_bang": {
+        "Bangs_front_long": 1.0
+      },
+      "Hair_side1": {
+        "Left_side_long": 1.0,
+        "Right_side_long": 1.0
+      },
+      "Hair_side2": {
+        "Left_side_long": 1.0,
+        "Right_side_long": 1.0
+      }
+    },
+    "material_slots": {
+      "Wendy_Face": "Face",
+      "Wendy_Face_alpha": "FaceAlpha",
+      "Wendy_body": "Skin",
+      "Wendy_Hair": "FrontHair",
+      "Wendy_Hair_Alpha": "FrontHair",
+      "Wendy_Hair_Fakeshadow": "FrontHair",
+      "Wendy_clothes": "Costume1",
+      "Wendy_clothes_headdress": "Costume1",
+      "Wendy_clothes_panties_alpha": "Costume1",
+      "Wendy_clothes_skirt_alpha": "Costume1"
+    },
+    "drop_materials": [],
+    "sole_bones": [
+      "Left_Foot",
+      "Right_Foot",
+      "Left_Toes",
+      "Right_Toes"
+    ],
+    "left_foot": "Left_Foot",
+    "left_toe": "Left_Toes",
+    "rest_rotations": [],
+    "adapt_humanoid": {
+      "hand_scale": 1.12,
+      "cuff_margin_cm": 2.0,
+      "merge_bones": {
+        "Upper_Arm_Twist.L": "Left Upper Arm",
+        "Lower_Arm_Twist.L": "Left Lower Arm",
+        "Upper_Arm_Twist.R": "Right Upper Arm",
+        "Lower_Arm_Twist.R": "Right Lower Arm"
+      },
+      "reparent_bones": {}
+    },
+    "keep_shape_keys": {
+      "eye_blink": "Blink"
+    }
+  },
+  "face": {
+    "blink": {
+      "morph": "eye_blink",
+      "ue_name": "Blink",
+      "interval_sec": 4.2,
+      "jitter_sec": 1.4,
+      "duration_sec": 0.2,
+      "phase_sec": 0.0
+    }
+  },
+  "retarget": {
+    "chains": {
+      "Spine": [
+        "Spine",
+        "UpperChest"
+      ],
+      "Neck": [
+        "Neck",
+        "Neck_02"
+      ],
+      "Head": [
+        "Head",
+        "Head"
+      ],
+      "LeftClavicle": [
+        "Left_Shoulder",
+        "Left_Shoulder"
+      ],
+      "RightClavicle": [
+        "Right_Shoulder",
+        "Right_Shoulder"
+      ],
+      "LeftArm": [
+        "Left_Upper_Arm",
+        "Left_Hand"
+      ],
+      "RightArm": [
+        "Right_Upper_Arm",
+        "Right_Hand"
+      ],
+      "LeftLeg": [
+        "Left_Upper_Leg",
+        "Left_Foot"
+      ],
+      "RightLeg": [
+        "Right_Upper_Leg",
+        "Right_Foot"
+      ],
+      "LeftToe": [
+        "Left_Toes",
+        "Left_Toes"
+      ],
+      "RightToe": [
+        "Right_Toes",
+        "Right_Toes"
+      ],
+      "LeftThumb": [
+        "Left_Thumb_Proximal",
+        "Left_Thumb_Distal"
+      ],
+      "LeftIndex": [
+        "Left_Index_Proximal",
+        "Left_Index_Distal"
+      ],
+      "LeftMiddle": [
+        "Left_Middle_Proximal",
+        "Left_Middle_Distal"
+      ],
+      "LeftRing": [
+        "Left_Ring_Proximal",
+        "Left_Ring_Distal"
+      ],
+      "LeftPinky": [
+        "Left_Little_Proximal",
+        "Left_Little_Distal"
+      ],
+      "RightThumb": [
+        "Right_Thumb_Proximal",
+        "Right_Thumb_Distal"
+      ],
+      "RightIndex": [
+        "Right_Index_Proximal",
+        "Right_Index_Distal"
+      ],
+      "RightMiddle": [
+        "Right_Middle_Proximal",
+        "Right_Middle_Distal"
+      ],
+      "RightRing": [
+        "Right_Ring_Proximal",
+        "Right_Ring_Distal"
+      ],
+      "RightPinky": [
+        "Right_Little_Proximal",
+        "Right_Little_Distal"
+      ],
+      "LeftUpperArmTwist1": [
+        "upperarm_twist_01_l",
+        "upperarm_twist_01_l"
+      ],
+      "LeftUpperArmTwist2": [
+        "upperarm_twist_02_l",
+        "upperarm_twist_02_l"
+      ],
+      "LeftLowerArmTwist1": [
+        "lowerarm_twist_01_l",
+        "lowerarm_twist_01_l"
+      ],
+      "LeftLowerArmTwist2": [
+        "lowerarm_twist_02_l",
+        "lowerarm_twist_02_l"
+      ],
+      "RightUpperArmTwist1": [
+        "upperarm_twist_01_r",
+        "upperarm_twist_01_r"
+      ],
+      "RightUpperArmTwist2": [
+        "upperarm_twist_02_r",
+        "upperarm_twist_02_r"
+      ],
+      "RightLowerArmTwist1": [
+        "lowerarm_twist_01_r",
+        "lowerarm_twist_01_r"
+      ],
+      "RightLowerArmTwist2": [
+        "lowerarm_twist_02_r",
+        "lowerarm_twist_02_r"
+      ],
+      "LeftThighTwist1": [
+        "thigh_twist_01_l",
+        "thigh_twist_01_l"
+      ],
+      "LeftThighTwist2": [
+        "thigh_twist_02_l",
+        "thigh_twist_02_l"
+      ],
+      "LeftCalfTwist1": [
+        "calf_twist_01_l",
+        "calf_twist_01_l"
+      ],
+      "LeftCalfTwist2": [
+        "calf_twist_02_l",
+        "calf_twist_02_l"
+      ],
+      "RightThighTwist1": [
+        "thigh_twist_01_r",
+        "thigh_twist_01_r"
+      ],
+      "RightThighTwist2": [
+        "thigh_twist_02_r",
+        "thigh_twist_02_r"
+      ],
+      "RightCalfTwist1": [
+        "calf_twist_01_r",
+        "calf_twist_01_r"
+      ],
+      "RightCalfTwist2": [
+        "calf_twist_02_r",
+        "calf_twist_02_r"
+      ]
+    },
+    "hand_ik": true,
+    "arm_pole_deg": 0.0,
+    "finger_alpha": 0.85,
+    "skip_auto_align": true
+  },
+  "physics": {
+    "world_alpha": 0.5,
+    "min_bone_size": 1.0,
+    "skip_match": "^(root|Hips|Spine|Spine_02|Spine_03|Chest|UpperChest|Neck|Neck_02|Head|Left_Shoulder|Right_Shoulder|Left_Upper_Arm|Right_Upper_Arm|Left_Lower_Arm|Right_Lower_Arm|Left_Hand|Right_Hand|Left_Upper_Leg|Right_Upper_Leg|Left_Lower_Leg|Right_Lower_Leg|Left_Foot|Right_Foot|Left_Toes|Right_Toes)$|_(Proximal|Intermediate|Distal)$|_twist_|^Hair_root$|^Skirt_root$|^Ribbon_root$",
+    "groups": [
+      {
+        "name": "tail",
+        "match": "^Tail_\\d\\d$",
+        "gravity": false,
+        "lin": 2.0,
+        "ang": 7.0,
+        "swing": 40,
+        "twist": 18,
+        "stiff": 900,
+        "damp": 42,
+        "collide": true
+      },
+      {
+        "name": "skirt",
+        "match": "^Skirt_[A-H]\\d\\d_",
+        "gravity": true,
+        "lin": 3.5,
+        "ang": 9.0,
+        "swing": 70,
+        "twist": 14,
+        "stiff": 60,
+        "damp": 30,
+        "collide": true
+      },
+      {
+        "name": "sleeve",
+        "match": "^Sleeve\\d\\d_",
+        "gravity": true,
+        "lin": 2.0,
+        "ang": 7.0,
+        "swing": 22,
+        "twist": 8,
+        "stiff": 220,
+        "damp": 25,
+        "collide": false
+      },
+      {
+        "name": "ribbon",
+        "match": "^(Upper_Arm_Ribbon\\d\\d_|Ribbon_[AB]\\d\\d_|Head_Ribon_)",
+        "gravity": true,
+        "lin": 1.8,
+        "ang": 6.0,
+        "swing": 18,
+        "twist": 6,
+        "stiff": 260,
+        "damp": 28,
+        "collide": false
+      },
+      {
+        "name": "hair",
+        "match": "^Hair_(Back|Front|Side|Ahoge)",
+        "gravity": true,
+        "lin": 1.5,
+        "ang": 5.0,
+        "swing": 14,
+        "twist": 6,
+        "stiff": 300,
+        "damp": 30,
+        "collide": false
+      }
+    ],
+    "kinematic_colliders": {
+      "leg": [
+        "Left_Upper_Leg",
+        "Left_Lower_Leg",
+        "Right_Upper_Leg",
+        "Right_Lower_Leg"
+      ],
+      "spine": [
+        "Spine",
+        "Chest",
+        "UpperChest"
+      ],
+      "head": [
+        "Head"
+      ]
+    },
+    "collide_pairs": [
+      [
+        "skirt",
+        "leg"
+      ],
+      [
+        "tail",
+        "leg"
+      ]
+    ]
+  },
+  "materials": {
+    "Face": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Material/MI_ZeroHun_Cap_01_b",
+    "FaceAlpha": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Material/MI_ZeroHun_Cloth_04_b",
+    "Skin": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Material/MI_ZeroHun_Cloth_02_b",
+    "FrontHair": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Material/MI_ZeroHun_Cloth_01_b",
+    "BackHair": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Material/MI_ZeroHun_Cloth_05_b",
+    "Costume1": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Material/MI_ZeroHun_Cloth_03_b"
+  },
+  "generated_textures": [
+    {
+      "out": "work/textures/T_Skin_ARM.png",
+      "type": "arm",
+      "rough": 0.62,
+      "metal": 0.0
+    },
+    {
+      "out": "work/textures/T_Hair_ARM.png",
+      "type": "arm",
+      "rough": 0.44,
+      "metal": 0.0
+    },
+    {
+      "out": "work/textures/T_Costume_ARM.png",
+      "type": "arm",
+      "rough": 0.74,
+      "metal": 0.0
+    },
+    {
+      "out": "work/textures/T_Metal_ARM.png",
+      "type": "arm_from_mask",
+      "mask": "source/PNG/Mask/Wendy_clothes_metal_mask.png",
+      "rough": 0.74,
+      "rough_metal": 0.32
+    },
+    {
+      "out": "work/textures/T_Flat_N.png",
+      "type": "flat_normal"
+    }
+  ],
+  "textures": [
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cap_V02_BC",
+      "slot": "Face",
+      "source": "input/textures/Wendy_Face.png",
+      "kind": "BC",
+      "lod_group": "TEXTUREGROUP_Project02"
+    },
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cap_V02_N",
+      "slot": "Face",
+      "source": "work/textures/T_Flat_N.png",
+      "kind": "N",
+      "lod_group": "TEXTUREGROUP_Project02"
+    },
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cap_V02_ARM",
+      "slot": "Face",
+      "source": "work/textures/T_Skin_ARM.png",
+      "kind": "ARM",
+      "lod_group": "TEXTUREGROUP_CharacterSpecular"
+    },
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cloth_04_BC",
+      "slot": "FaceAlpha",
+      "source": "input/textures/Wendy_Face.png",
+      "kind": "BC",
+      "lod_group": "TEXTUREGROUP_Project02"
+    },
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cloth_04_N",
+      "slot": "FaceAlpha",
+      "source": "work/textures/T_Flat_N.png",
+      "kind": "N",
+      "lod_group": "TEXTUREGROUP_Project02"
+    },
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cloth_04_ARM",
+      "slot": "FaceAlpha",
+      "source": "work/textures/T_Skin_ARM.png",
+      "kind": "ARM",
+      "lod_group": "TEXTUREGROUP_CharacterSpecular"
+    },
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cloth_02_BC",
+      "slot": "Skin",
+      "source": "input/textures/Wendy_Body.png",
+      "kind": "BC",
+      "lod_group": "TEXTUREGROUP_Project02"
+    },
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cloth_02_N",
+      "slot": "Skin",
+      "source": "work/textures/T_Flat_N.png",
+      "kind": "N",
+      "lod_group": "TEXTUREGROUP_Project02"
+    },
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cloth_02_ARM",
+      "slot": "Skin",
+      "source": "work/textures/T_Skin_ARM.png",
+      "kind": "ARM",
+      "lod_group": "TEXTUREGROUP_CharacterSpecular"
+    },
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cloth_01_BC",
+      "slot": "FrontHair",
+      "source": "input/textures/Wendy_Hair.png",
+      "kind": "BC",
+      "lod_group": "TEXTUREGROUP_Project02"
+    },
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cloth_01_N",
+      "slot": "FrontHair",
+      "source": "work/textures/T_Flat_N.png",
+      "kind": "N",
+      "lod_group": "TEXTUREGROUP_Project02"
+    },
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cloth_01_ARM",
+      "slot": "FrontHair",
+      "source": "work/textures/T_Hair_ARM.png",
+      "kind": "ARM",
+      "lod_group": "TEXTUREGROUP_CharacterSpecular"
+    },
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cloth_05_BC",
+      "slot": "BackHair",
+      "source": "input/textures/Wendy_Hair.png",
+      "kind": "BC",
+      "lod_group": "TEXTUREGROUP_Project02"
+    },
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cloth_05_N",
+      "slot": "BackHair",
+      "source": "work/textures/T_Flat_N.png",
+      "kind": "N",
+      "lod_group": "TEXTUREGROUP_Project02"
+    },
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cloth_05_ARM",
+      "slot": "BackHair",
+      "source": "work/textures/T_Hair_ARM.png",
+      "kind": "ARM",
+      "lod_group": "TEXTUREGROUP_CharacterSpecular"
+    },
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cloth_03_BC",
+      "slot": "Costume1",
+      "source": "input/textures/Wendy_clothes.png",
+      "kind": "BC",
+      "lod_group": "TEXTUREGROUP_Project02"
+    },
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cloth_03_N",
+      "slot": "Costume1",
+      "source": "input/textures/Wendy_clothes_Normal.png",
+      "kind": "N",
+      "lod_group": "TEXTUREGROUP_Project02"
+    },
+    {
+      "target": "/Game/PBZContent/Characters/Hero/Hun_New_V2b/Textures/T_ZeroHun_Cloth_03_ARM",
+      "slot": "Costume1",
+      "source": "work/textures/T_Metal_ARM.png",
+      "kind": "ARM",
+      "lod_group": "TEXTUREGROUP_CharacterSpecular"
+    }
+  ],
+  "variants": {
+    "default": {
+      "include": []
+    }
+  },
+  "preview": {
+    "closeups": [
+      {
+        "bone": "Left_Foot",
+        "label": "feet",
+        "size": 45,
+        "dz": -8,
+        "dy": -3
+      },
+      {
+        "bone": "Head",
+        "label": "face",
+        "size": 30,
+        "dz": 2,
+        "dy": -12
+      }
+    ],
+    "body_match": "^(Hips|Spine|Spine_02|Spine_03|Chest|UpperChest)$|Upper_Leg$|^thigh_twist_",
+    "arm_match": "^(Left|Right)_(Upper_Arm|Lower_Arm|Hand)|^(upperarm|lowerarm)_twist_"
+  },
+  "preview_anims": [
+    "ProjectPBZ/Plugins/HuaShira/Content/Characters/Hero/Hero_Hun/Animation/Locomotion/Unarmed/Idle/Hun_Unarmed_Idle_Loop",
+    "ProjectPBZ/Plugins/HuaShira/Content/Characters/Hero/Hero_Hun/Animation/Locomotion/Unarmed/Run/Hun_Unarmed_Run_Fwd_Loop",
+    "ProjectPBZ/Plugins/HuaShira/Content/Animation/Hero/Hun/SH_Sources/SoftSword/Locomotion/Idle/Hun_SoftSword_Stance_Idle_Loop",
+    "ProjectPBZ/Plugins/HuaShira/Content/Animation/Hero/Hun/SH_Sources/SoftSword/Hun_SoftSword_Stance_Dodge_F",
+    "ProjectPBZ/Plugins/HuaShira/Content/Animation/Hero/Hun/SH_Sources/PoJun/Hun_PoJun_Attack_AA"
+  ]
+}

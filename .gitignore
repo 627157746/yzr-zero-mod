@@ -29,10 +29,15 @@ ProjectPBZ/Plugins/HuaShira/Content/*
 tools/PbzExport/bin/
 tools/PbzExport/obj/
 
-# mods 目录：只将 mods/ciel 的配置与文档纳入版本控制，source / input / work / release 及其他 mod 全部排除
+# mods 目录：只将已完成 mod 的配置与文档纳入版本控制，source / input / work / release 及其他 mod 全部排除
 mods/*
 !mods/ciel/
 mods/ciel/source/
 mods/ciel/input/
 mods/ciel/work/
 mods/ciel/release/
+!mods/wendy/
+mods/wendy/source/
+mods/wendy/input/
+mods/wendy/work/
+mods/wendy/release/

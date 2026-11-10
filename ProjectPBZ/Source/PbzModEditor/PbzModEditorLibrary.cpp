@@ -678,6 +678,52 @@ FString UPbzModEditorLibrary::DescribeMorphTargets(USkeletalMesh* Mesh)
 	return FString::Join(Lines, TEXT("\n"));
 }
 
+FString UPbzModEditorLibrary::DescribePhysicsBodies(UPhysicsAsset* PhysicsAsset)
+{
+	TArray<FString> Lines;
+	if (!PhysicsAsset)
+	{
+		return TEXT("null physics asset");
+	}
+	// 关节：ConstraintBone1（子骨）→ swing/twist 上限与驱动刚度/阻尼
+	TMap<FName, const FConstraintInstance*> JointOf;
+	for (const TObjectPtr<UPhysicsConstraintTemplate>& Template : PhysicsAsset->ConstraintSetup)
+	{
+		if (Template)
+		{
+			JointOf.Add(Template->DefaultInstance.ConstraintBone1, &Template->DefaultInstance);
+		}
+	}
+	Lines.Add(FString::Printf(TEXT("bodies=%d joints=%d"), PhysicsAsset->SkeletalBodySetups.Num(), PhysicsAsset->ConstraintSetup.Num()));
+	for (const TObjectPtr<USkeletalBodySetup>& Body : PhysicsAsset->SkeletalBodySetups)
+	{
+		if (!Body)
+		{
+			continue;
+		}
+		const FBodyInstance& BI = Body->DefaultInstance;
+		const bool bSim = Body->PhysicsType == EPhysicsType::PhysType_Simulated;
+		const bool bCollide = Body->CollisionReponse == EBodyCollisionResponse::BodyCollision_Enabled;
+		// bEnableGravity 是 FBodyInstance 的 public 位域，直接读；这是判断“尾巴会不会被重力拉直”的唯一依据
+		const bool bGrav = BI.bEnableGravity;
+		const float Lin = BI.LinearDamping;
+		const float Ang = BI.AngularDamping;
+		FString Joint = TEXT("-");
+		if (const FConstraintInstance* const* CI = JointOf.Find(Body->BoneName))
+		{
+			const float Swing1 = (*CI)->GetAngularSwing1Limit();
+			const float Swing2 = (*CI)->GetAngularSwing2Limit();
+			const float Twist = (*CI)->GetAngularTwistLimit();
+			float Stiff = 0.f, Damp = 0.f, ForceLimit = 0.f;
+			(*CI)->GetAngularDriveParams(Stiff, Damp, ForceLimit);
+			Joint = FString::Printf(TEXT("swing=%.1f/%.1f twist=%.1f stiff=%.0f damp=%.0f"), Swing1, Swing2, Twist, Stiff, Damp);
+		}
+		Lines.Add(FString::Printf(TEXT("%s sim=%d grav=%d collide=%d lin=%.1f ang=%.1f %s"),
+			*Body->BoneName.ToString(), bSim ? 1 : 0, bGrav ? 1 : 0, bCollide ? 1 : 0, Lin, Ang, *Joint));
+	}
+	return FString::Join(Lines, TEXT("\n"));
+}
+
 TArray<FName> UPbzModEditorLibrary::GetMeshBoneNames(USkeletalMesh* Mesh)
 {
 	TArray<FName> Out;

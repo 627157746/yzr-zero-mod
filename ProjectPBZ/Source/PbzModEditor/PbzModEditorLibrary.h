@@ -64,6 +64,11 @@ public:
 	// 形态键的逐 LOD 统计（有位移的顶点数、最大位移 cm），用来确认几何真的在网格里而不只是名字
 	UFUNCTION(BlueprintCallable, Category = "PbzMod")
 	static FString DescribeMorphTargets(USkeletalMesh* Mesh);
+
+	// 回读物理资产里每根骨骼的真实设置（是否模拟/重力/阻尼/碰撞、关节 swing/twist 上限与驱动刚度阻尼）。
+	// 用来确认 mod.json 的 physics 参数真的写进了资产，而不是只看构建日志里的分组名单。
+	UFUNCTION(BlueprintCallable, Category = "PbzMod")
+	static FString DescribePhysicsBodies(UPhysicsAsset* PhysicsAsset);
 	// 网格参考骨架的骨骼名（下面两个函数的输入输出都按这个顺序）
 	UFUNCTION(BlueprintCallable, Category = "PbzMod")
 	static TArray<FName> GetMeshBoneNames(USkeletalMesh* Mesh);
