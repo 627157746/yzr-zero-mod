@@ -80,12 +80,14 @@ UE 工程只有一份：**同一时间只能构建一个 mod**，构建会清掉
 4. 填 `physics.groups`：先跑 `-NoPhys` 确认模型、姿势、材质正确，再配置头发、尾巴、裙摆、飘带物理。
 5. 填 `materials`/`textures`：每个材质槽借一个魂的材质实例，覆盖它的 BC/N/ARM 贴图。
 6. （可选）要眨眼/表情：`model.keep_shape_keys`（源形态键名 → UE 名）+ `face.blink`（`interval_sec` / `jitter_sec` / `duration_sec` / `phase_sec`）；构建日志应出现 `模型形态键 ['Blink']` 与 `眨眼事件图 编译 True`。
+7. （可选）双手武器左手脱柄：在 `soul.two_hand_grip` 配置握持修正（全身适配后左右手相对关系会变化，手腕跟随但可能离刀柄；后处理 ABP 用 `ik_hand_gun → ik_hand_l` 驱动左臂 IK 并沿刀轴限制可达范围，详见 `references/two-hand-grip.md`）。
 
 ## 问题与修法
 
 | 现象 | 原因 | 修法 |
 |---|---|---|
 | 大宽肩、端肩架肘、手握不住武器 | 未启用全身比例逆向适配，魂肩高比少女高 10~17 cm；或 `hand_l/r`（25.402cm）长度不匹配 | 启用 `model.adapt_humanoid` + `soul.adapted_pose_json` + `retarget.skip_auto_align: true`（见 `examples/ciel/mod.json`，全动作手误差 `0.0 cm`） |
+| 双手武器左手握不住刀柄（攻击后回待机脱手） | 全身比例适配改变了左右手在武器空间的相对关系；手腕对齐魂不等于握住武器 | 在 `soul.two_hand_grip` 启用双手握持修正（详见 `references/two-hand-grip.md`，离线预览中用实际后处理蓝图与武器空间握持统计量化） |
 | 手腕/肩膀挥刀时拧麻花 | 缺少四肢 Twist 扭转骨映射 | `adapt_humanoid` 自动生成 16 根 Twist 骨，确认 `retarget.chains` 中包含 16 条 `*Twist1/2` 链 |
 | 袖口荷叶边/百褶被拉变形 | 前臂拉长时把袖口一起拉伸了 | 调大 `model.adapt_humanoid.cuff_margin_cm`（如 `2.0`~`3.0`），让末端袖口做纯刚性平移 |
 | 袖子/裙摆乱飞 | 物理拉回绑定姿势，T 姿势下它们是水平的 | `model.rest_rotations` 转到下垂方向；根部用重力 + 弱驱动 + 大阻尼 |

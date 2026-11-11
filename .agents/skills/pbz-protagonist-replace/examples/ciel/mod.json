@@ -7,6 +7,13 @@
       "clavicle": 1.0,
       "upperarm": 1.0,
       "lowerarm": 1.0
+    },
+    "two_hand_grip": {
+      "enabled": true,
+      "full_radius_cm": 12.0,
+      "zero_radius_cm": 20.0,
+      "max_reach": 0.97,
+      "min_hand_gap_cm": 9.0
     }
   },
   "package": {
@@ -533,6 +540,10 @@
     "ProjectPBZ/Plugins/HuaShira/Content/Animation/Hero/Hun/SH_Sources/SoftSword/Hun_SoftSword_Stance_Dodge_F",
     "ProjectPBZ/Plugins/HuaShira/Content/Animation/Hero/Hun/SH_Sources/PoJun/Hun_PoJun_Attack_A",
     "ProjectPBZ/Plugins/HuaShira/Content/Animation/Hero/Hun/SH_Sources/PoJun/Hun_PoJun_Attack_AA",
-    "ProjectPBZ/Plugins/HuaShira/Content/Animation/Hero/Hun/SH_Sources/YanYueDao/Hun_YanYueDao_Attack_A"
+    "ProjectPBZ/Plugins/HuaShira/Content/Animation/Hero/Hun/SH_Sources/YanYueDao/Hun_YanYueDao_Attack_A",
+    "ProjectPBZ/Plugins/HuaShira/Content/Characters/Hero/Hero_Hun/Animation/Locomotion/LongBlade/Idle/Hun_LongBlade_Idle_Loop",
+    "ProjectPBZ/Plugins/HuaShira/Content/Characters/Hero/Hero_Hun/Animation/Locomotion/LongBlade/Stance/Idle/Hun_LongBlade_Stance_Idle_Loop",
+    "ProjectPBZ/Plugins/HuaShira/Content/Characters/Hero/Hero_Hun/Animation/Locomotion/TangBlade/Stance/Idle/Hun_TangBlade_Stance_Idle_Loop",
+    "ProjectPBZ/Plugins/HuaShira/Content/Animation/Hero/Hun/SH_Sources/WangMingZhanMaDao/Hun_WangMingZhanMaDao_Attack_A"
   ]
 }

@@ -26,6 +26,10 @@
    - **定型后重建**：等鞋底落地、静止姿势烘焙、Twist 细分全部完成后，再乘**新的骨骼静止矩阵**把 delta 贴回去（否则眨眼会沿旧方向合眼），默认值置 0 交给动画曲线驱动。
    - **运行时驱动**：`PbzModEditorLibrary.BuildBlinkEventGraph` 在后处理 ABP 的事件图表里用 C++ 生成 `Update Animation → 相位/三角窗/余弦 → SetMorphTarget("Blink", w)` 节点链。选 `SetMorphTarget` 是因为它写组件的 `MorphTargetCurves`，不依赖骨骼曲线的 MorphTarget 标记，也不依赖每帧骨骼求值。
    - **默认节奏**：`interval_sec: 4.2` + `jitter_sec: 1.4`（时间轴正弦抖动）+ `duration_sec: 0.2` → 平均 **4.17 秒**一次、间隔 2.97~6.58 秒、单次闭合约 42 ms。抖动幅度有上限（`≤0.8/频率`），超限会让相位倒退、两次眨眼挤在一起。
+4. **双手武器握持后处理修正（`soul.two_hand_grip` + `ABP_SoulGrip`）**：
+   - **手腕对齐不等于握住武器**：全身比例适配后，即使模型手腕对魂手腕误差为 `0.0 cm`，左右手在原版武器空间的相对几何仍会改变（长兵器常态待机左手离原握点约 18 cm）。
+   - **源身体后处理驱动**：`PbzModEditorLibrary.BuildSoulGripPostProcess` 为魂身体生成 `SkinParts/ABP_SoulGrip`，通过 `CopyBone(hand_r → ik_hand_gun)` 与 `TwoBoneIK(hand_l, ik_hand_l 骨骼空间)` 恢复原版双手握持相对关系。
+   - **几何门控与防拉伸滑动**：事件图根据左手目标到武器 Z 轴的径向距离平滑启闭修正（默认 12 cm 内全开、20 cm 外关闭）；超出左臂臂长范围时沿刀轴往护手方向滑近，禁止拉伸肢体。换其他模型的完整适配流程见 `.agents/skills/pbz-protagonist-replace/references/two-hand-grip.md`。
 
 ## 目录结构
 
@@ -120,5 +124,6 @@ pwsh tools\preview-retarget.ps1 -Mod ciel        # 离线预览：手误差（cm
 所有可调参数都在 `mods/<mod>/mod.json`，字段说明见 `.agents/skills/pbz-protagonist-replace/references/mod-json.md`；游戏版本绑定数据和引擎底层原理见同目录 `facts.md`。
 
 - 调手臂/握武器：`soul.adapted_pose_json`、`model.adapt_humanoid`、`retarget.hand_ik` / `arm_pole_deg` / `finger_alpha`
+- 调双手武器握柄：`soul.two_hand_grip`（`full_radius_cm`、`zero_radius_cm`、`max_reach`、`min_hand_gap_cm`，详见 `.agents/skills/pbz-protagonist-replace/references/two-hand-grip.md`）
 - 调物理：`physics.groups` / `world_alpha` / `collide_pairs`
 - 调眨眼：`face.blink` 的 `interval_sec`（间隔）、`jitter_sec`（间隔随机抖动，上限 `0.8/0.31 ≈ 2.58`）、`duration_sec`（单次闭合时长）、`phase_sec`（起始相位）；要保留其他表情键时在 `model.keep_shape_keys` 里加一条即可
