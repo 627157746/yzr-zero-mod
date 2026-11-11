@@ -67,5 +67,6 @@
     2. 将模型四肢、手腕、五指对齐魂的静止姿势，执行 `Apply Pose as Rest Pose` 烘焙静止姿势（配合 `mod.json` 的 `retarget.skip_auto_align: true`），之后执行鞋底落地（`Z=0`）。
     3. 在编辑模式下细分 `Spine_02/03`、`UpperChest`、`Neck_02` 及 16 根四肢 Twist 骨（`upperarm/lowerarm/thigh/calf_twist_01/02`），按线性投影重分配蒙皮权重；并令 `Hips -> Spine..UpperChest -> Left/Right_Shoulder` 的局部平移方向与魂 `orig_t` 完全平行（仅调整内部关节轴心，不移动网格顶点），使运行时 `AnimationScaled` 平移向量与模型 100% 重合。
     4. 导出全身 42 根骨骼的适配局部平移到 `work/soul_adapted_pose.json`，由 `setup_assets.py`（`soul.adapted_pose_json`）写入 `SK_SoulBlank`（`Hun_Body_Simple`）。`ciel` 实测 9 段动作 72 个采样点手部误差全部为 **`0.0 cm`**。
+- **双手握持要单独量武器空间误差**：模型到魂手腕误差为 0 不代表握住武器。`soul.two_hand_grip` 在魂空身体上生成 `ABP_SoulGrip`，恢复动画自带 IK 手的相对握持关系；参数、验证结果和局限统一见 `references/mod-json.md` / `references/facts.md` 的双手握持节。AnimGraph 字段有同名引脚时必须同步引脚默认值，成品回读验证，不能只读编辑器结构体。
 - 当前工作区内置 `mods/ciel` 作为标准示例 mod。
 - 成品放项目 release，不部署进游戏目录（用户要求手动测试）。

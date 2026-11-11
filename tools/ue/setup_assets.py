@@ -148,6 +148,38 @@ def arm_scale_of(bone):
             return float(sc.get(k, 1.0))
     return 1.0
 
+def soul_grip(blank):
+    """魂身体后处理：双手握持修正（soul.two_hand_grip）。全身比例适配后左右手相对关系被破坏，双手武器左手抓不到刀柄。
+    蓝图放在 SkinParts（ship_prefixes 会打包），由 build_soul 设到覆盖的身体网格上。未启用时返回 None。"""
+    g = S.get('two_hand_grip') or {}
+    if not g.get('enabled'):
+        log('双手握持修正 未启用')
+        return None
+    path = S['body'].rsplit('/', 1)[0] + '/ABP_SoulGrip'
+    assert any(path.startswith(p.rstrip('/')) for p in S['ship_prefixes']), f'{path} 不在 ship_prefixes 里，不会被打包'
+    f = u.AnimBlueprintFactory()
+    f.set_editor_property('target_skeleton', blank.get_editor_property('skeleton'))
+    f.set_editor_property('preview_skeletal_mesh', blank)
+    f.set_editor_property('parent_class', u.AnimInstance.static_class())
+    abp = create(path, u.AnimBlueprint, f)
+    text = LIB.build_soul_grip_post_process(abp, blank, float(g.get('full_radius_cm', 12.0)), float(g.get('zero_radius_cm', 20.0)),
+                                            float(g.get('max_reach', 0.97)), float(g.get('min_hand_gap_cm', 9.0)))
+    ok = text.startswith('OK')
+    log('双手握持 ABP_SoulGrip 编译', ok, '|', text.replace('\n', ' | ')[:1600])
+    assert ok, 'ABP_SoulGrip 生成失败'
+    desc = LIB.describe_soul_grip_post_process(abp)
+    log('双手握持 回读 |', desc.replace('\n', ' | ')[:2400])
+    # 回读断言：上一次失败就是 CopyBone 的三个开关全关（节点直接跳过）。这些字段在节点上有隐藏引脚，
+    # 编译器以引脚默认值为准，所以要同时断言 {pin=...}；烤进资产的值由 verify_release.py 再查一遍
+    for want in ('bCopyTranslation=True{pin=True}', 'bCopyRotation=True{pin=True}', 'TargetBone=(BoneName="ik_hand_gun")', 'IKBone=(BoneName="hand_l")',
+                 'BoneName="ik_hand_l"', 'bTakeRotationFromEffectorSpace=True', 'EffectorLocationSpace=BCS_BoneSpace',
+                 'JointTargetLocation=(X=0.000000,Y=-15.000000,Z=0.000000){pin=0.000000,-15.000000,0.000000}',
+                 'Alpha<-K2Node_VariableGet', 'EffectorLocation<-K2Node_VariableGet', 'event Set GripAlpha exec=yes value_linked=yes',
+                 'event Set GripOffset exec=yes value_linked=yes'):
+        assert want in desc, f'ABP_SoulGrip 回读缺少 {want}'
+    save(abp)
+    return abp
+
 def build_soul():
     blank = import_skeletal(os.path.join(ROOT, 'work', 'soul', 'SK_SoulBlank.fbx'), S['blank_mesh'])
     skel = blank.get_editor_property('skeleton')
@@ -179,6 +211,9 @@ def build_soul():
     pa = LIB.create_empty_physics_asset(S['physics_asset']); assert pa; save(pa)
     body = duplicate(S['body'], blank)
     body.set_editor_property('physics_asset', pa)   # 保留原版物理资产引用：受击判定靠它
+    grip = soul_grip(blank)
+    if grip:
+        assert LIB.set_post_process_anim_blueprint(body, grip), '身体后处理蓝图设置失败'
     save(body)
     for p in S['blank_parts']:
         save(duplicate(p, blank))
@@ -400,7 +435,8 @@ def main():
     info = {'variant': VARIANT, 'phys': bool(pa), 'slots': slots, 'textures': tex,
             'skeleton': f'{FOLDER}/SK_{NAME}_Skeleton', 'anim_bp': f'{FOLDER}/ABP_{NAME}',
             'retargeter': f'{FOLDER}/RTG_Soul_To_{NAME}', 'physics': f'{FOLDER}/PA_{NAME}_Secondary' if pa else None,
-            'blink': (CFG.get('face') or {}).get('blink'), 'morph_targets': morphs}
+            'blink': (CFG.get('face') or {}).get('blink'), 'morph_targets': morphs,
+            'soul_grip': S['body'].rsplit('/', 1)[0] + '/ABP_SoulGrip' if (S.get('two_hand_grip') or {}).get('enabled') else None}
     json.dump(info, open(os.path.join(MODEL_DIR, 'setup_info.json'), 'w', encoding='utf-8'), indent=1)
     log('变体', VARIANT, '物理', bool(pa))
     log('DONE')

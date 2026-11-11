@@ -30,6 +30,16 @@
 | `ship_prefixes` | 要打包的游戏目录（被覆盖的部件所在目录） |
 | `adapted_pose_json` | 相对 mod 目录的 JSON 路径（默认 `"work/soul_adapted_pose.json"`），由 `tools/blender/adapt_humanoid.py` 自动生成：`{骨骼名小写: [x, y, z]}`（UE 局部坐标 cm）。写入 `SK_SoulBlank`（`Hun_Body_Simple`）的参考姿势局部平移，实现全身 `AnimationScaled` 骨骼（`Pelvis`、`spine_01..05`、`neck_01..02`、`clavicle`、`upperarm`、`lowerarm`、`thigh`、`calf`、`foot`、`ball` 及全部 `twist` 骨）逆向贴合替换模型比例 |
 | `arm_scale` | 可选，仅旧方案不启用 `adapted_pose_json` 时缩放 `clavicle`/`upperarm`/`lowerarm` 参考平移；标准方案下保持全 `1.0` |
+| `two_hand_grip` | 可选，魂身体后处理握持修正。`{"enabled": true, "full_radius_cm": 12.0, "zero_radius_cm": 20.0, "max_reach": 0.97, "min_hand_gap_cm": 9.0}`。全身比例适配会改变双手相对武器的位置；启用后生成 `SkinParts/ABP_SoulGrip` 并设为身体后处理蓝图，用动画的 `ik_hand_gun → ik_hand_l` 相对变换恢复左手相对右手的位置和旋转。只使用引擎内置节点，无需运行时插件 |
+
+`two_hand_grip` 参数：
+
+- `enabled`：默认不启用；仅在需要的 mod 配置，`basic` 与 `phys` 均生效。
+- `full_radius_cm` / `zero_radius_cm`：根据左手目标离 `weapon_r` 局部 Z 轴的径向距离做几何筛选。≤ full 时权重 1，≥ zero 时权重 0，中间线性混合；这不是游戏提供的双手握持状态，其他武器仍需验证。
+- `max_reach`：左肩到握持目标的距离限制为左臂参考长度的这一比例（范围 `0.5 < max_reach ≤ 1`）。够不到时沿刀轴正方向滑动握点，手臂不拉伸；可达距离限制无法保证任意姿势都有解。
+- `min_hand_gap_cm`：限制沿刀轴滑动后与右手的最小轴向间距。默认 `9.0 cm`。
+
+事件图读取的是上一帧已求值姿势，因此快速变化时筛选权重和滑动量存在一帧滞后。修改后必须检查成品节点常量，并同时比较原版武器空间的握持误差、模型到魂手部误差和穿模。详见 `facts.md` 的双手握持节。
 
 ## model（Blender 处理，`tools/blender/prepare_model.py` + `adapt_humanoid.py`）
 

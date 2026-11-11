@@ -45,6 +45,15 @@
    - 自动细分 `Spine_02/03`、`UpperChest`、`Neck_02` 及 16 根四肢 Twist 骨（注意魂的小腿/前臂 Twist 顺序是 `02` 在近端 1/3、`01` 在远端 2/3；大腿/上臂是 `01` 在近端 1/3、`02` 在远端 2/3），按投影线性插值重分配蒙皮权重并在 `SOUL_CHAINS` / `retarget.chains` 中一一映射。
    - 完整实现已封装为独立公共模块 `tools/blender/adapt_humanoid.py`，声明式配置参考 `mods/ciel/mod.json` 与 `.agents/skills/pbz-protagonist-replace/examples/ciel/mod.json`。
 
+## 双手握持修正（ciel，2026-11-11，离线验证）
+
+- **模型手腕对齐魂手腕不等于握住武器**。全身 `AnimationScaled` 比例改变后，左右手原有的相对关系会变化；`Hun_LongBlade_Idle_Loop` 实测左手离原版武器空间握点约 18 cm，而原有「模型→魂」手误差仍是 0.0 cm。
+- 配置 `soul.two_hand_grip` 后，`BuildSoulGripPostProcess` 生成魂身体后处理 `SkinParts/ABP_SoulGrip`：`InPose → LocalToComponent → CopyBone(hand_r→ik_hand_gun，平移+旋转) → TwoBoneIK(hand_l，ik_hand_l 骨骼空间，取目标旋转) → ComponentToLocal`。事件图通过原始 IK 手局部关系与 `weapon_r` 的局部变换，计算目标离武器 Z 轴的径向距离作为权重；超出臂长范围时沿刀轴滑近右手，禁止拉伸手臂。此筛选是几何启发式，不能宣称覆盖所有武器/动作。
+- **编译器会覆盖未连线引脚对应的结构体字段**：`AnimBlueprintCompiler.cpp::GatherFoldRecordsForAnimationNode` 使用引脚默认值。只写 `Node.bCopyTranslation=True`，编辑器回读也为 True，但烹饪后仍可能 False；`SetNodeText` 必须同步同名引脚默认值。`verify_release.py` 直接回读成品 `CopyBone` 和 `TwoBoneIK`，防止节点成为空操作。
+- 离线验证通过：`build-tools.ps1 -SkipExport`；ciel 构建、烹饪与成品检查；13 段动作 × 8 帧模型到魂手部误差均为 0.0 cm（保留一位小数）。逐帧真实组件/后处理求值：长兵器常态 461 帧握持径向最大 0.0037 cm，战斗待机 151 帧最大 0.0132 cm（沿柄滑动 11.21~12.56 cm），破军攻击 171 帧径向最大约 0.011 cm；七组双刀/蛇双刀/徒手/软剑对照共 168 帧，修正权重全为 0、非 IK 辅助分支的骨骼位置与旋转不变。
+- 离线局部姿势插值的「攻击→常态」探针中，过渡结束后待机末 15 帧握点误差最大 0.0024 cm。**该探针不等同游戏状态机**。门控和滑动参数读取上一帧姿势；实际游戏组件顺序、动作混合、掌心/手指接触、所有武器及物理仍未进游戏验证。
+- 预览重建旋转时先归一化导出的四元数，再转 `Rotator`；略偏离单位长度的 ACL 四元数直接转欧拉角会放大姿势误差。启用 grip 后预览真实运行源身体后处理，再交给重定向器；`model_before` / `soul_before` 保留同次输入的未修正姿势供对比。目标绿点是原版握点，沿柄滑动后的手可沿武器轴偏离绿点。
+
 ## 引擎 / 工具坑
 
 - 命令行导入网格时 Interchange 会通知内容浏览器导致崩溃：先执行 `Interchange.FeatureFlags.Import.SyncToBrowser 0`。
@@ -61,7 +70,7 @@
 - 想让手/武器一起下移而不脱手，只能改 `soul.arm_offset`（魂参考姿势常量偏移），且必须作用在 **upperarm_l/r**：左右上臂旋转相同、局部 Z 平移为 0，同号偏移保持对称；锁骨不行（`clavicle_l/r` 局部 Z 是 -7.99/+7.99 镜像，同号偏移会把左右手 X 拉歪 6.7cm）。这类常量偏移只改静态位置，不改动画摆幅。
 - `StretchChainOp` 的 `MatchSourceLength` 按当前帧**链长**（相邻骨骼距离之和）匹配，不是肩→手直线距离；源链长在动画里恒定，所以救不了短臂够不到远处 IK 目标的问题。
 - **旧局部缩放方案下，弓形（肘偏）与脱手严格此消彼长，且都要看 D 而不是只看链长 L**：弓形 = max(0, L-D)，脱手 = max(0, D-L)。缩小 `soul.arm_scale` 会把 D 拉小 → 脱手好了但弓形加重（D 43→40cm，待机肘偏 3~4→9cm）。**调完参数必须同时量化肘偏、手误差、穿模三项**，只盯一项必然翻车。
-- **离线「肘偏」不能单独代表游戏内的「弓形」观感**：可能原因：① 肘偏只衡量肘到肩手连线的距离，不含手/武器贴合——手抬高或攻击帧脱手时，绷直但错位更容易被看成姿势怪；② `preview_retarget.py` 每动作只采 4 帧、只跑 `FIKRetargetProcessor`，不执行 PostProcess ABP 与动画混合；③ 第三人称视角下各方向分量的可见度不同。**结论：手臂观感一律以进游戏实测为准；离线三项指标只用于筛选方案和排查回归。**
+- **离线「肘偏」不能单独代表游戏内的「弓形」观感**：可能原因：① 肘偏只衡量肘到肩手连线的距离，不含手/武器贴合——手抬高或攻击帧脱手时，绷直但错位更容易被看成姿势怪；② `preview_retarget.py` 默认每动作只采 4 帧；启用 `soul.two_hand_grip` 时会执行源身体 PostProcess ABP，但仍不运行游戏完整状态机、模型刚体和真实动画混合；③ 第三人称视角下各方向分量的可见度不同。**结论：手臂观感一律以进游戏实测为准；离线三项指标只用于筛选方案和排查回归。**
 - `AlignPoleVectorOp.StaticAngularOffset` 是绕「肩→手」链轴旋转链根：3D 肘偏、手误差、3D 姿势幅度**完全不变**，只改变肘在垂直平面里的方位。角度可超出 0~90，负值/大角度都合法。
 - `IKChainsOp.BlendToSourceTranslation` 从 1 降到 0 并**不能**让链恒伸直：实测待机肘偏 2.10→3.54cm、手误差 1.1→10.8cm，w=1 本来就是最优（FK 目标位置不是简单的「肩+方向×L」，还叠了 NormalizedLimbLength、PelvisMotion、极向量）。
 - UE 5.7 的 IKRig 除 LimbSolver 外还有 `FIKRigStretchLimbSolver`（`bEnableStretching` / `MaximumStretchDistance` / `StretchStartPercent`，FABRIK 迭代）：`bEnableStretching` 能把最大手误差 10.7→3.0cm（够得到远目标），但肘偏 10.90→11.17 **没改善**、且每帧恒定 3cm 偏差——squash 只是压缩链的形变，不消除弯肘。

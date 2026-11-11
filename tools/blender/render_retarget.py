@@ -46,21 +46,24 @@ def apply_pose(arm, bones, ref, cur):
         if b.parent: pb.matrix_basis = (b.parent.matrix_local.inverted() @ b.matrix_local).inverted() @ (P[b.parent.name].inverted() @ P[b.name])
         else: pb.matrix_basis = b.matrix_local.inverted() @ P[b.name]
 
-def marker(name):
+def marker(name, color=(1, 0, 0, 1)):
     import bmesh
     me = bpy.data.meshes.new(name); o = bpy.data.objects.new(name, me); bpy.context.scene.collection.objects.link(o)
     bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=12, v_segments=8, radius=3.0); bm.to_mesh(me); bm.free()
-    mat = bpy.data.materials.new(name); mat.diffuse_color = (1, 0, 0, 1); me.materials.append(mat)
+    mat = bpy.data.materials.new(name); mat.diffuse_color = color; me.materials.append(mat)
     o.show_in_front = True
     return o
 marks = [marker('SoulHandL'), marker('SoulHandR')]
+# 绿点：双手武器左手「应该握的地方」（原版左手相对武器的位置，preview_retarget.py 的 grip_target；不是握柄帧时隐藏）
+grip_mark = marker('GripTarget', (0, 0.9, 0.1, 1))
 
 TW, TH = 300, 360
 sc, cam = viewlib.setup_scene(TW, TH, 250)
 VIEWS = {'front': ((0, -600, 100), (90, 0, 0)), 'side': ((600, 0, 100), (90, 0, 90))}
 TILE = os.path.join(OUT, '_tile.png')
-def render_tile(view, show_model):
+def render_tile(view, show_model, grip=False):
     for o in (t_mesh, *marks): o.hide_render = not show_model
+    grip_mark.hide_render = not (show_model and grip)
     for o in h_meshes: o.hide_render = show_model
     loc, rot = VIEWS[view]
     cam.location = loc; cam.rotation_euler = [math.radians(a) for a in rot]
@@ -110,11 +113,13 @@ for a in D['anims']:
         apply_pose(h_arm, D['soul_bones'], D['soul_ref'], a['soul'][f])
         for mk, bn in zip(marks, ('hand_l', 'hand_r')):
             v = a['soul'][f][hb[bn]]; mk.location = (v[4], -v[5], v[6])
+        gt = (a.get('grip_target') or [None] * k)[f]
+        if gt: grip_mark.location = (gt[0], -gt[1], gt[2])
         bpy.context.view_layer.update()
         log('穿模', a['name'], '帧', a['frames'][f], '穿进躯干的顶点数/最大深度cm', clipping())
         y0 = TH * (k - 1 - f)   # Blender 图像从下往上存，第 0 帧放最上面
         for col, (view, show_m) in enumerate((('front', True), ('front', False), ('side', True))):
-            sheet[y0:y0 + TH, col * TW:(col + 1) * TW] = render_tile(view, show_m)
+            sheet[y0:y0 + TH, col * TW:(col + 1) * TW] = render_tile(view, show_m, bool(gt))
     out = bpy.data.images.new('sheet', TW * 3, TH * k, alpha=True)
     out.pixels.foreach_set(sheet.ravel())
     out.filepath_raw = os.path.join(OUT, f'{a["name"]}.png'); out.file_format = 'PNG'; out.save()

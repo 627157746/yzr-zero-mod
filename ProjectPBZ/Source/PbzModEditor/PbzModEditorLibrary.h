@@ -2,12 +2,28 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Animation/AnimInstance.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "PbzModEditorLibrary.generated.h"
 
 class UAnimBlueprint;
 class UPhysicsAsset;
 class USkeletalMesh;
+
+// 离线验证用的主动画实例：把外部给定的一帧局部姿势原样输出（不跑任何动画图），后处理蓝图在它后面照常运行。
+// 只在编辑器离线预览里用（EvaluatePostProcessPoses），不进 mod 包。
+UCLASS(Transient, NotBlueprintable)
+class UPbzPoseFeedInstance : public UAnimInstance
+{
+	GENERATED_BODY()
+
+public:
+	// 网格骨骼顺序的局部姿势
+	TArray<FTransform> MeshLocalPose;
+
+protected:
+	virtual FAnimInstanceProxy* CreateAnimInstanceProxy() override;
+};
 
 UCLASS()
 class UPbzModEditorLibrary : public UBlueprintFunctionLibrary
@@ -52,6 +68,19 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PbzMod")
 	static FString BuildBlinkEventGraph(UAnimBlueprint* AnimBlueprint, FName MorphTargetName, float IntervalSec, float DurationSec, float PhaseSec, float JitterSec);
 
+	// 魂身体（空身体）的后处理动画蓝图：双手握持修正。全身比例适配后，魂动画里左右手的相对关系（双手握刀柄）被破坏，
+	// 这里用动画自带的 ik_hand_gun / ik_hand_l（=原比例下的右手 / 左手）把左手拉回「原版相对右手的握持位置」：
+	//   AnimGraph：InPose → CopyBone(hand_r → ik_hand_gun，平移+旋转) → TwoBoneIK(hand_l，目标 ik_hand_l 骨骼空间 + 偏移，取目标旋转) → 输出
+	//   事件图表：左手目标离刀轴（weapon_r 局部 Z）的径向距离 rho → GripAlpha（rho ≤ FullRadius 为 1，≥ ZeroRadius 为 0，只在左手真的贴着武器时生效）；
+	//            目标超出左臂可达距离（MaxReach × 臂长）时沿刀轴往护手方向滑动（不越过右手 - MinHandGap）→ GripOffset
+	// 臂长从 SoulMesh（已写入适配比例的空身体）的参考姿势算。返回日志，第一行是 OK 或 FAIL
+	UFUNCTION(BlueprintCallable, Category = "PbzMod")
+	static FString BuildSoulGripPostProcess(UAnimBlueprint* AnimBlueprint, USkeletalMesh* SoulMesh, float FullRadius, float ZeroRadius, float MaxReach, float MinHandGap);
+
+	// 回读握持后处理蓝图：AnimGraph 节点的关键设置（导出文本）与连线、事件图表常量，用来确认真的写进资产（上一次失败就是 CopyBone 三个开关全关成了空操作）
+	UFUNCTION(BlueprintCallable, Category = "PbzMod")
+	static FString DescribeSoulGripPostProcess(UAnimBlueprint* AnimBlueprint);
+
 	// ---- 离线预览（不创建资源） ----
 	// 网格上的形态键（morph target）名，用于确认眨眼形态键真的导入进 UE 了
 	UFUNCTION(BlueprintCallable, Category = "PbzMod")
@@ -78,6 +107,12 @@ public:
 	static TArray<FTransform> LocalPosesToComponentSpace(USkeletalMesh* Mesh, const TArray<FName>& BoneNames, const TArray<FTransform>& LocalTransforms, int32 NumFrames);
 
 	// 用重定向资源把源网格的组件空间姿势转成目标网格的（和游戏里 RetargetPoseFromMesh 节点同一个处理器）；失败返回空数组
+	// 真跑一遍后处理动画蓝图：临时骨骼网格组件（Mesh + PostProcessClass 覆盖）以 UPbzPoseFeedInstance 作主实例喂入每帧局部姿势，
+	// 每帧 tick 若干次（事件图表读的是上一次求值的骨骼，需要收敛）后读组件空间姿势。
+	// 返回：每帧 网格骨骼数 + 1 个变换（帧优先、网格骨骼顺序；最后一个是诊断：平移 X = 后处理实例的 AlphaVar 变量值，缩放 = OffsetVar 变量值），失败返回空数组
+	UFUNCTION(BlueprintCallable, Category = "PbzMod")
+	static TArray<FTransform> EvaluatePostProcessPoses(USkeletalMesh* Mesh, UClass* PostProcessClass, const TArray<FName>& BoneNames, const TArray<FTransform>& LocalTransforms, int32 NumFrames, int32 TicksPerFrame, FName AlphaVar, FName OffsetVar);
+
 	UFUNCTION(BlueprintCallable, Category = "PbzMod")
 	static TArray<FTransform> RetargetComponentPoses(UObject* IKRetargeter, USkeletalMesh* SourceMesh, USkeletalMesh* TargetMesh, const TArray<FTransform>& SourceComponentPoses, int32 NumFrames);
 };
